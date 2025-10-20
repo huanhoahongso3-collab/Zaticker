@@ -3,12 +3,12 @@ apply plugin: 'kotlin-android'
 
 android {
     namespace 'dhp.thl.tpl.ntt'
-    compileSdk 33      // <-- updated from 31 to 34
+    compileSdk 33
 
     defaultConfig {
         applicationId 'dhp.thl.tpl.ntt'
         minSdk 26
-        targetSdk 33  // <-- updated
+        targetSdk 33
         versionCode 1
         versionName '1.0'
 
@@ -44,9 +44,9 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.google.android.material:material:1.9.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
-
-    // Optional common ones
     implementation 'androidx.fragment:fragment-ktx:1.6.2'
-    implementation 'androidx.navigation:navigation-fragment-ktx:2.7.7'
-    implementation 'androidx.navigation:navigation-ui-ktx:2.7.7'
+
+    // ✅ Downgraded Navigation to the last version compatible with SDK 33
+    implementation 'androidx.navigation:navigation-fragment-ktx:2.6.0'
+    implementation 'androidx.navigation:navigation-ui-ktx:2.6.0'
 }
