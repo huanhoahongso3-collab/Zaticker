@@ -1,4 +1,4 @@
-name: Android CI
+name: Android CI (Generate Wrapper from Local Gradle)
 
 on:
   push:
@@ -20,25 +20,19 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v3
+      - name: Make sure local gradle is executable
+        run: chmod +x ./gradle
 
-      - name: Generate Gradle wrapper if missing
-        run: |
-          if [ ! -f ./gradlew ]; then
-            echo "Gradle wrapper not found, generating..."
-            gradle wrapper
-          else
-            echo "Gradle wrapper already exists."
-          fi
+      - name: Generate Gradle Wrapper using local gradle
+        run: ./gradle wrapper
 
-      - name: Grant execute permission for gradlew
+      - name: Grant execute permission for generated wrapper
         run: chmod +x ./gradlew
 
-      - name: Build Debug APK
+      - name: Build Debug APK using wrapper
         run: ./gradlew assembleDebug --stacktrace
 
-      - name: Upload APK artifact
+      - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
           name: Zaticker-debug-apk
