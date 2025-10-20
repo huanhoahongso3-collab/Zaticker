@@ -1,5 +1,6 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-kapt'  // for Glide annotation processor
 
 android {
     namespace 'dhp.thl.tpl.ntt'
@@ -10,7 +11,7 @@ android {
         minSdk 26
         targetSdk 33
         versionCode 1
-        versionName '1.0'
+        versionName '1.4'  // ✅ updated version name
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -46,7 +47,11 @@ dependencies {
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation 'androidx.fragment:fragment-ktx:1.6.2'
 
-    // ✅ Downgraded Navigation to the last version compatible with SDK 33
+    // ✅ Navigation (last version supporting compileSdk 33)
     implementation 'androidx.navigation:navigation-fragment-ktx:2.6.0'
     implementation 'androidx.navigation:navigation-ui-ktx:2.6.0'
+
+    // ✅ Glide for image loading
+    implementation 'com.github.bumptech.glide:glide:4.16.0'
+    kapt 'com.github.bumptech.glide:compiler:4.16.0'
 }
