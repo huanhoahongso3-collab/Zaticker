@@ -44,31 +44,38 @@ class MainActivity : AppCompatActivity(), StickerAdapter.StickerListener {
         dst?.let {
             contentResolver.openOutputStream(it)?.use { out -> input.copyTo(out) }
             saveSticker(it)
-            adapter.addSticker(it)
+            adapter.addSticker(it, toTop = true)
             Toast.makeText(this, "Imported!", Toast.LENGTH_SHORT).show()
         }
     }
 
-    /** ✅ FIXED: Safely saves without losing existing stickers */
+    /** ✅ Safe save (keeps all stickers and preserves order) */
     private fun saveSticker(uri: Uri) {
         val existing = prefs.getStringSet("uris", emptySet()) ?: emptySet()
-        val updated = existing.toMutableSet().apply { add(uri.toString()) }
-        prefs.edit().putStringSet("uris", updated).apply()
+        val updated = existing.toMutableList().apply {
+            remove(uri.toString()) // avoid duplicates
+            add(uri.toString())    // newest last
+        }
+        prefs.edit().putStringSet("uris", updated.toSet()).apply()
     }
 
-    /** ✅ FIXED: Properly loads all saved stickers */
+    /** ✅ Newest stickers shown first (top-left) */
     private fun loadStickers(): MutableList<Uri> {
         val saved = prefs.getStringSet("uris", emptySet()) ?: emptySet()
-        return saved.map { Uri.parse(it) }.toMutableList()
+        return saved.map { Uri.parse(it) }.reversed().toMutableList()
     }
 
+    /** ✅ Proper Zalo sticker intent (not photo share) */
     override fun onStickerClick(uri: Uri) {
         val intent = Intent(Intent.ACTION_SEND).apply {
-            type = "image/png"
+            type = "image/*"
             putExtra(Intent.EXTRA_STREAM, uri)
-            `package` = "com.zing.zalo"
+            putExtra("is_sticker", true)
+            putExtra("type", 3)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            setPackage("com.zing.zalo")
         }
+
         try {
             startActivity(intent)
         } catch (e: Exception) {
@@ -76,7 +83,7 @@ class MainActivity : AppCompatActivity(), StickerAdapter.StickerListener {
         }
     }
 
-    /** ✅ Confirmation dialog before deleting sticker */
+    /** ✅ Confirmation dialog before deletion */
     override fun onStickerLongClick(uri: Uri) {
         AlertDialog.Builder(this)
             .setTitle("Delete sticker?")
