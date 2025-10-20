@@ -1,44 +1,22 @@
-<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="dhp.thl.tpl.ntt">
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.example.zaticker">
 
-    <!-- Minimum and target SDK -->
-    <uses-sdk
-        android:minSdkVersion="26"
-        android:targetSdkVersion="31" />
-
-    <!-- Permissions for reading and sharing images -->
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
-    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
-        tools:ignore="ScopedStorage" />
-
-    <!-- Optional: Internet if needed -->
-    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.INTERNET"
+        tools:ignore="MissingPermission" />
 
     <application
-        android:name=".ZatickerApp"
         android:allowBackup="true"
+        android:label="@string/app_name"
         android:icon="@mipmap/ic_launcher"
-        android:label="Zaticker"
         android:roundIcon="@mipmap/ic_launcher_round"
-        android:supportsRtl="true"
-        android:theme="@style/Theme.Zaticker.Material3">
-
-        <!-- Main activity -->
-        <activity
-            android:name=".MainActivity"
-            android:exported="true">
+        android:theme="@style/Theme.Zaticker">
+        <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-
-        <!-- Optional: Activity for sticker sharing if separate -->
-        <activity
-            android:name=".ShareStickerActivity"
-            android:exported="true"/>
     </application>
 
 </manifest>
