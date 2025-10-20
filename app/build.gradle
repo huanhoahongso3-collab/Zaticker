@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace 'dhp.tpl.thl'
+    namespace 'dhp.thl.tpl.ntt'
     compileSdk 34
 
     defaultConfig {
-        applicationId "dhp.tpl.thl"
+        applicationId "dhp.thl.tpl.ntt"
         minSdk 26
         targetSdk 34
         versionCode 1
