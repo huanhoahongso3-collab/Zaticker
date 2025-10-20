@@ -1,3 +1,3 @@
 <resources>
-    <color name="ic_launcher_background">@android:color/transparent</color>
+    <color name="ic_launcher_background">?android:attr/colorBackground</color>
 </resources>
