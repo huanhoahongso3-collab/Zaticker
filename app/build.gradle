@@ -1,14 +1,22 @@
+plugins {
+    id 'com.android.application' version '8.1.0' apply false
+    id 'org.jetbrains.kotlin.android' version '1.9.0' apply false
+}
+
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+
 android {
-    namespace "dhp.thl.tpl.ntt" // <- add this line
+    namespace 'dhp.thl.tpl.ntt'
 
     compileSdk 31
 
     defaultConfig {
-        applicationId "dhp.thl.tpl.ntt"
+        applicationId 'dhp.thl.tpl.ntt'
         minSdk 26
         targetSdk 31
         versionCode 1
-        versionName "1.0"
+        versionName '1.0'
     }
 
     buildTypes {
