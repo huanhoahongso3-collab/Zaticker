@@ -1,3 +1,4 @@
 <resources>
-    <color name="ic_launcher_background">#000000</color> <!-- Dark mode: black -->
+    <!-- Dark mode background -->
+    <color name="ic_launcher_background">#000000</color>
 </resources>
