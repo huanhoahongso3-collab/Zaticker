@@ -2,17 +2,13 @@ name: Android CI
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main ]
   pull_request:
-    branches: [ main, master ]
+    branches: [ main ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
-    defaults:
-      run:
-        working-directory: Zaticker  # 👈 Run everything from inside the folder
 
     steps:
       - name: Checkout repository
@@ -24,24 +20,16 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - name: Cache Gradle
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('Zaticker/**/*.gradle*', 'Zaticker/**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-
       - name: Grant execute permission for gradlew
-        run: chmod +x ./gradlew
+        run: chmod +x gradlew
+        working-directory: ./Zaticker
 
-      - name: Build with Gradle
-        run: ./gradlew assembleRelease
+      - name: Build Debug APK
+        run: ./gradlew assembleDebug
+        working-directory: ./Zaticker
 
-      - name: Upload release APK
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Zaticker-release
-          path: Zaticker/app/build/outputs/apk/release/app-release.apk
+          name: Zaticker-debug-apk
+          path: Zaticker/app/build/outputs/apk/debug/app-debug.apk
