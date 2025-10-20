@@ -1,7 +1,7 @@
 package dhp.thl.tpl.ntt
 
 import android.app.AlertDialog
-import android.content.ContentValues
+import android.content.ClipData
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -11,6 +11,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.GridLayoutManager
 import dhp.thl.tpl.ntt.databinding.ActivityMainBinding
+import java.io.File
+import java.io.FileOutputStream
 
 class MainActivity : AppCompatActivity(), StickerAdapter.StickerListener {
     private lateinit var binding: ActivityMainBinding
@@ -26,56 +28,77 @@ class MainActivity : AppCompatActivity(), StickerAdapter.StickerListener {
         binding.recycler.layoutManager = GridLayoutManager(this, 3)
         binding.recycler.adapter = adapter
 
-        binding.addButton.setOnClickListener { pickImage.launch("image/*") }
-    }
-
-    private val pickImage = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        uri?.let { importToMediaStore(it) }
-    }
-
-    private fun importToMediaStore(src: Uri) {
-        val input = contentResolver.openInputStream(src) ?: return
-        val values = ContentValues().apply {
-            put(MediaStore.Images.Media.MIME_TYPE, "image/png")
-            put(MediaStore.Images.Media.DISPLAY_NAME, "zaticker_${System.currentTimeMillis()}.png")
-            put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/Zaticker")
-        }
-        val dst = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
-        dst?.let {
-            contentResolver.openOutputStream(it)?.use { out -> input.copyTo(out) }
-            saveSticker(it)
-            adapter.addSticker(it, toTop = true)
-            Toast.makeText(this, "Imported!", Toast.LENGTH_SHORT).show()
+        binding.addButton.setOnClickListener {
+            openSystemImagePicker()
         }
     }
 
-    /** ✅ Safe save (keeps all stickers and preserves order) */
+    /** ✅ Open system image picker (Gallery/Photos app) supporting multiple images */
+    private fun openSystemImagePicker() {
+        val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI).apply {
+            type = "image/*"
+            putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
+        }
+        pickImages.launch(intent)
+    }
+
+    private val pickImages = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == RESULT_OK) {
+            val clipData: ClipData? = result.data?.clipData
+            val uri: Uri? = result.data?.data
+
+            when {
+                clipData != null -> {
+                    for (i in 0 until clipData.itemCount) {
+                        importToAppData(clipData.getItemAt(i).uri)
+                    }
+                }
+                uri != null -> importToAppData(uri)
+                else -> Toast.makeText(this, "No images selected", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    /** ✅ Store selected image inside app-private storage */
+    private fun importToAppData(src: Uri) {
+        try {
+            val input = contentResolver.openInputStream(src) ?: return
+            val name = "zaticker_${System.currentTimeMillis()}.png"
+            val file = File(filesDir, name)
+            FileOutputStream(file).use { out -> input.copyTo(out) }
+
+            val uri = Uri.fromFile(file)
+            saveSticker(uri)
+            adapter.addSticker(uri)
+        } catch (e: Exception) {
+            Toast.makeText(this, "Import failed: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    /** ✅ Save all imported URIs persistently */
     private fun saveSticker(uri: Uri) {
-        val existing = prefs.getStringSet("uris", emptySet()) ?: emptySet()
-        val updated = existing.toMutableList().apply {
-            remove(uri.toString()) // avoid duplicates
-            add(uri.toString())    // newest last
-        }
-        prefs.edit().putStringSet("uris", updated.toSet()).apply()
+        val set = prefs.getStringSet("uris", mutableSetOf())?.toMutableSet() ?: mutableSetOf()
+        set.add(uri.toString())
+        prefs.edit().putStringSet("uris", set).apply()
     }
 
-    /** ✅ Newest stickers shown first (top-left) */
+    /** ✅ Load saved stickers and sort by newest first */
     private fun loadStickers(): MutableList<Uri> {
-        val saved = prefs.getStringSet("uris", emptySet()) ?: emptySet()
-        return saved.map { Uri.parse(it) }.reversed().toMutableList()
+        val set = prefs.getStringSet("uris", emptySet()) ?: emptySet()
+        return set.map { Uri.parse(it) }
+            .sortedByDescending { File(Uri.parse(it.toString()).path ?: "").lastModified() }
+            .toMutableList()
     }
 
-    /** ✅ Proper Zalo sticker intent (not photo share) */
+    /** ✅ Share sticker as real sticker in Zalo */
     override fun onStickerClick(uri: Uri) {
         val intent = Intent(Intent.ACTION_SEND).apply {
-            type = "image/*"
+            type = "image/png"
             putExtra(Intent.EXTRA_STREAM, uri)
-            putExtra("is_sticker", true)
-            putExtra("type", 3)
+            `package` = "com.zing.zalo"
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            setPackage("com.zing.zalo")
+            putExtra("is_sticker", true)
         }
-
         try {
             startActivity(intent)
         } catch (e: Exception) {
@@ -83,18 +106,18 @@ class MainActivity : AppCompatActivity(), StickerAdapter.StickerListener {
         }
     }
 
-    /** ✅ Confirmation dialog before deletion */
+    /** ✅ Confirm before delete */
     override fun onStickerLongClick(uri: Uri) {
         AlertDialog.Builder(this)
-            .setTitle("Delete sticker?")
-            .setMessage("Are you sure you want to delete this sticker?")
+            .setTitle("Delete Sticker")
+            .setMessage("Do you want to delete this sticker?")
             .setPositiveButton("Delete") { _, _ ->
                 try {
-                    contentResolver.delete(uri, null, null)
+                    File(uri.path ?: "").delete()
                     adapter.removeSticker(uri)
-                    val saved = prefs.getStringSet("uris", emptySet()) ?: emptySet()
-                    val updated = saved.toMutableSet().apply { remove(uri.toString()) }
-                    prefs.edit().putStringSet("uris", updated).apply()
+                    val set = prefs.getStringSet("uris", mutableSetOf())?.toMutableSet()
+                    set?.remove(uri.toString())
+                    prefs.edit().putStringSet("uris", set).apply()
                     Toast.makeText(this, "Deleted", Toast.LENGTH_SHORT).show()
                 } catch (e: Exception) {
                     Toast.makeText(this, "Delete failed", Toast.LENGTH_SHORT).show()
