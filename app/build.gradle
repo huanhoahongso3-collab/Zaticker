@@ -8,7 +8,7 @@ android {
     defaultConfig {
         applicationId 'dhp.thl.tpl.ntt'
         minSdk 26
-        targetSdk 34   // <-- updated
+        targetSdk 31  // <-- updated
         versionCode 1
         versionName '1.0'
 
