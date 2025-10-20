@@ -3,12 +3,12 @@ apply plugin: 'kotlin-android'
 
 android {
     namespace 'dhp.thl.tpl.ntt'
-    compileSdk 34      // <-- updated from 31 to 34
+    compileSdk 33      // <-- updated from 31 to 34
 
     defaultConfig {
         applicationId 'dhp.thl.tpl.ntt'
         minSdk 26
-        targetSdk 31  // <-- updated
+        targetSdk 33  // <-- updated
         versionCode 1
         versionName '1.0'
 
