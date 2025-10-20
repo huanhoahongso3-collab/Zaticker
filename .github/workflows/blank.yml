@@ -21,15 +21,13 @@ jobs:
           java-version: 17
 
       - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
-        working-directory: ./Zaticker
+        run: chmod +x ./gradlew
 
       - name: Build Debug APK
         run: ./gradlew assembleDebug
-        working-directory: ./Zaticker
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: Zaticker-debug-apk
-          path: Zaticker/app/build/outputs/apk/debug/app-debug.apk
+          path: app/build/outputs/apk/debug/app-debug.apk
