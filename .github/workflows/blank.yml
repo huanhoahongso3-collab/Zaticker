@@ -45,11 +45,11 @@ jobs:
 
       # 6️⃣ Build Debug APK
       - name: Build Debug APK
-        run: ./gradlew assembleRelease --stacktrace
+        run: ./gradlew assembleDebug --stacktrace
 
       # 7️⃣ Upload APK artifact
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: Zaticker-debug-apk
-          path: app/build/outputs/apk/release/*.apk
+          path: app/build/outputs/apk/debug/app-debug.apk
