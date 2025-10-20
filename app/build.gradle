@@ -1,27 +1,24 @@
-android {
-    compileSdkVersion 34
+apply plugin: 'com.android.application'
 
+android {
+    compileSdkVersion 26
     defaultConfig {
         applicationId "dhp.thl.tpl.ntt"
         minSdkVersion 26
-        targetSdkVersion 34
+        targetSdkVersion 26
         versionCode 1
         versionName "1.0"
     }
 
     buildTypes {
         release {
-            // ❌ remove this line if present
-            // isMinifyEnabled false
-            // ✅ use this instead:
             minifyEnabled false
-            shrinkResources false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-        }
-        debug {
-            minifyEnabled false
         }
     }
 
-    namespace "dhp.thl.tpl.ntt"
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
 }
