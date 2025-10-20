@@ -6,6 +6,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -63,15 +64,44 @@ class MainActivity : AppCompatActivity(), StickerAdapter.StickerListener {
 
     override fun onStickerClick(uri: Uri) {
         val intent = Intent(Intent.ACTION_SEND).apply {
-            type = "image/png"
+            type = "image/*"
             putExtra(Intent.EXTRA_STREAM, uri)
-            `package` = "com.zing.zalo"
+            putExtra("type", 3)
+            putExtra("is_sticker", true)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            addFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT)
+            addFlags(Intent.FLAG_ACTIVITY_PREVIOUS_IS_TOP)
+            setClassName("com.zing.zalo", "com.zing.zalo.ui.TempShareViaActivity")
         }
+
         try {
+            // Grant URI permission to Zalo
+            val resInfoList = packageManager.queryIntentActivities(intent, 0)
+            for (resolveInfo in resInfoList) {
+                val packageName = resolveInfo.activityInfo.packageName
+                grantUriPermission(packageName, uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+
+            // Debugging log: compare to adb intent
+            Log.d("ZaloIntent", intent.toUri(Intent.URI_INTENT_SCHEME))
+
             startActivity(intent)
         } catch (e: Exception) {
-            Toast.makeText(this, "Zalo not installed", Toast.LENGTH_SHORT).show()
+            e.printStackTrace()
+            Toast.makeText(this, "Zalo not installed or sharing failed", Toast.LENGTH_SHORT).show()
+
+            // fallback to normal share chooser if Zalo not found
+            try {
+                val fallbackIntent = Intent(Intent.ACTION_SEND).apply {
+                    type = "image/*"
+                    putExtra(Intent.EXTRA_STREAM, uri)
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
+                startActivity(Intent.createChooser(fallbackIntent, "Share Image"))
+            } catch (ignored: Exception) {
+                Toast.makeText(this, "No app can handle sharing", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
