@@ -2,7 +2,6 @@ package dhp.thl.tpl.ntt
 
 import android.net.Uri
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
@@ -49,7 +48,7 @@ class StickerAdapter(
 
     override fun getItemCount(): Int = stickers.size
 
-    /** ✅ Add a new sticker, optionally at the top-left */
+    /** ✅ Add a new sticker, optionally at the top */
     fun addSticker(uri: Uri, toTop: Boolean = false) {
         if (toTop) {
             stickers.add(0, uri)
@@ -58,6 +57,11 @@ class StickerAdapter(
             stickers.add(uri)
             notifyItemInserted(stickers.size - 1)
         }
+    }
+
+    /** ✅ Convenience function to match previous calls */
+    fun addStickerAtTop(uri: Uri) {
+        addSticker(uri, toTop = true)
     }
 
     /** ✅ Remove a sticker safely */
