@@ -1,10 +1,10 @@
-name: Android CI (Old-style, Android 8)
+name: Android CI (Old-style, Android 8) newui
 
 on:
   push:
-    branches: [ main ]
+    branches: [ newui ]
   pull_request:
-    branches: [ main ]
+    branches: [ newui ]
 
 jobs:
   build:
