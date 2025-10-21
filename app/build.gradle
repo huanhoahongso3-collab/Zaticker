@@ -10,8 +10,8 @@ android {
         applicationId 'dhp.thl.tpl.ntt'
         minSdk 29
         targetSdk 36
-        versionCode 2010
-        versionName '2.1'  // ✅ updated version name
+        versionCode 2023
+        versionName '2.3'  // ✅ updated version name
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
