@@ -18,14 +18,14 @@ import java.io.FileOutputStream
 class MainActivity : AppCompatActivity(), StickerAdapter.StickerListener {
     private lateinit var binding: ActivityMainBinding
     private lateinit var adapter: StickerAdapter
-    private val prefs by lazy { getSharedPreferences("stickers", MODE_PRIVATE) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        adapter = StickerAdapter(loadStickers(), this)
+        // ✅ Load ordered sticker list from adapter helper
+        adapter = StickerAdapter(StickerAdapter.loadOrdered(this), this)
         binding.recycler.layoutManager = GridLayoutManager(this, 3)
         binding.recycler.adapter = adapter
 
@@ -62,7 +62,7 @@ class MainActivity : AppCompatActivity(), StickerAdapter.StickerListener {
             }
         }
 
-    /** ✅ Import and save image into app-private files */
+    /** ✅ Import and save image into app-private storage */
     private fun importToAppData(src: Uri) {
         try {
             val input = contentResolver.openInputStream(src) ?: return
@@ -72,30 +72,15 @@ class MainActivity : AppCompatActivity(), StickerAdapter.StickerListener {
 
             val uri = Uri.fromFile(file)
 
-            // ✅ Save and refresh
-            saveSticker(uri)
-            adapter.addStickerAtTop(uri)
+            // ✅ Add to adapter & persist
+            adapter.addStickerAtTop(this, uri)
             binding.recycler.scrollToPosition(0)
         } catch (e: Exception) {
             Toast.makeText(this, "Import failed: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
 
-    /** ✅ Save sticker list in SharedPreferences */
-    private fun saveSticker(uri: Uri) {
-        val set = prefs.getStringSet("uris", mutableSetOf())?.toMutableSet() ?: mutableSetOf()
-        val newList = mutableListOf(uri.toString())
-        newList.addAll(set)
-        prefs.edit().putStringSet("uris", newList.toSet()).apply()
-    }
-
-    /** ✅ Load saved stickers (newest first) */
-    private fun loadStickers(): MutableList<Uri> {
-        val set = prefs.getStringSet("uris", emptySet()) ?: emptySet()
-        return set.map { Uri.parse(it) }.toMutableList()
-    }
-
-    /** ✅ Share sticker to Zalo (real sticker intent) */
+    /** ✅ Share sticker to Zalo (as real sticker intent) */
     override fun onStickerClick(uri: Uri) {
         try {
             val file = File(uri.path!!)
@@ -106,7 +91,7 @@ class MainActivity : AppCompatActivity(), StickerAdapter.StickerListener {
                 putExtra(Intent.EXTRA_STREAM, contentUri)
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
 
-                // Only real sticker keys
+                // Real sticker keys for Zalo
                 putExtra("is_sticker", true)
                 putExtra("type", 3)
 
@@ -119,7 +104,7 @@ class MainActivity : AppCompatActivity(), StickerAdapter.StickerListener {
         }
     }
 
-    /** ✅ Delete sticker and remove file from /data */
+    /** ✅ Delete sticker and remove file from internal storage */
     override fun onStickerLongClick(uri: Uri) {
         AlertDialog.Builder(this)
             .setTitle("Delete Sticker")
@@ -129,11 +114,7 @@ class MainActivity : AppCompatActivity(), StickerAdapter.StickerListener {
                     val file = File(uri.path ?: "")
                     if (file.exists()) file.delete()
 
-                    adapter.removeSticker(uri)
-                    val set = prefs.getStringSet("uris", mutableSetOf())?.toMutableSet()
-                    set?.remove(uri.toString())
-                    prefs.edit().putStringSet("uris", set).apply()
-
+                    adapter.removeSticker(this, uri)
                     Toast.makeText(this, "Deleted", Toast.LENGTH_SHORT).show()
                 } catch (e: Exception) {
                     Toast.makeText(this, "Delete failed", Toast.LENGTH_SHORT).show()
@@ -143,7 +124,7 @@ class MainActivity : AppCompatActivity(), StickerAdapter.StickerListener {
             .show()
     }
 
-    /** ✅ Handle share intents (import shared stickers) */
+    /** ✅ Handle external share intents to import stickers */
     private fun handleShareIntent(intent: Intent?) {
         if (intent == null) return
 
