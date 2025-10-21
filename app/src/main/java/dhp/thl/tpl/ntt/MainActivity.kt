@@ -41,22 +41,23 @@ class MainActivity : AppCompatActivity(), StickerAdapter.StickerListener {
         pickImages.launch(intent)
     }
 
-    private val pickImages = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == RESULT_OK) {
-            val clipData: ClipData? = result.data?.clipData
-            val uri: Uri? = result.data?.data
+    private val pickImages =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == RESULT_OK) {
+                val clipData: ClipData? = result.data?.clipData
+                val uri: Uri? = result.data?.data
 
-            when {
-                clipData != null -> {
-                    for (i in 0 until clipData.itemCount) {
-                        importToAppData(clipData.getItemAt(i).uri)
+                when {
+                    clipData != null -> {
+                        for (i in 0 until clipData.itemCount) {
+                            importToAppData(clipData.getItemAt(i).uri)
+                        }
                     }
+                    uri != null -> importToAppData(uri)
+                    else -> Toast.makeText(this, "No images selected", Toast.LENGTH_SHORT).show()
                 }
-                uri != null -> importToAppData(uri)
-                else -> Toast.makeText(this, "No images selected", Toast.LENGTH_SHORT).show()
             }
         }
-    }
 
     /** ✅ Save selected image to app-private storage */
     private fun importToAppData(src: Uri) {
@@ -82,7 +83,6 @@ class MainActivity : AppCompatActivity(), StickerAdapter.StickerListener {
     /** ✅ Persist sticker list in SharedPreferences */
     private fun saveSticker(uri: Uri) {
         val set = prefs.getStringSet("uris", mutableSetOf())?.toMutableSet() ?: mutableSetOf()
-        // Newest first — rebuild the set with new URI at top
         val newList = mutableListOf(uri.toString())
         newList.addAll(set)
         prefs.edit().putStringSet("uris", newList.toSet()).apply()
@@ -94,7 +94,7 @@ class MainActivity : AppCompatActivity(), StickerAdapter.StickerListener {
         return set.map { Uri.parse(it) }.toMutableList()
     }
 
-    /** ✅ Share sticker as real sticker via FileProvider */
+    /** ✅ Share sticker as a *real sticker* (only is_sticker + type) */
     override fun onStickerClick(uri: Uri) {
         try {
             val file = File(uri.path!!)
@@ -107,13 +107,19 @@ class MainActivity : AppCompatActivity(), StickerAdapter.StickerListener {
             val intent = Intent(Intent.ACTION_SEND).apply {
                 type = "image/png"
                 putExtra(Intent.EXTRA_STREAM, contentUri)
-                `package` = "com.zing.zalo"
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+
+                // ✅ Only these two keys matter
                 putExtra("is_sticker", true)
+                putExtra("type", 3)
+
+                // ✅ Target Zalo sticker share
+                setClassName("com.zing.zalo", "com.zing.zalo.ui.TempShareViaActivity")
             }
+
             startActivity(intent)
         } catch (e: Exception) {
-            Toast.makeText(this, "Zalo not installed", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Zalo not installed or share failed", Toast.LENGTH_SHORT).show()
         }
     }
 
