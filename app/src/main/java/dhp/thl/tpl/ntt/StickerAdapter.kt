@@ -1,11 +1,13 @@
 package dhp.thl.tpl.ntt
 
+import android.content.Context
 import android.net.Uri
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import dhp.thl.tpl.ntt.databinding.ItemStickerBinding
+import org.json.JSONArray
 
 class StickerAdapter(
     private val stickers: MutableList<Uri>,
@@ -34,7 +36,7 @@ class StickerAdapter(
             .centerCrop()
             .into(holder.binding.image)
 
-        // Click → share
+        // Tap → share
         holder.binding.image.setOnClickListener {
             listener.onStickerClick(uri)
         }
@@ -49,7 +51,7 @@ class StickerAdapter(
     override fun getItemCount(): Int = stickers.size
 
     /** ✅ Add a new sticker, optionally at the top */
-    fun addSticker(uri: Uri, toTop: Boolean = false) {
+    fun addSticker(context: Context, uri: Uri, toTop: Boolean = false) {
         if (toTop) {
             stickers.add(0, uri)
             notifyItemInserted(0)
@@ -57,19 +59,45 @@ class StickerAdapter(
             stickers.add(uri)
             notifyItemInserted(stickers.size - 1)
         }
+        saveOrder(context)
     }
 
-    /** ✅ Convenience function to match previous calls */
-    fun addStickerAtTop(uri: Uri) {
-        addSticker(uri, toTop = true)
+    /** ✅ Shortcut for adding new sticker at top */
+    fun addStickerAtTop(context: Context, uri: Uri) {
+        addSticker(context, uri, toTop = true)
     }
 
-    /** ✅ Remove a sticker safely */
-    fun removeSticker(uri: Uri) {
+    /** ✅ Remove sticker safely and persist */
+    fun removeSticker(context: Context, uri: Uri) {
         val index = stickers.indexOf(uri)
         if (index != -1) {
             stickers.removeAt(index)
             notifyItemRemoved(index)
+            saveOrder(context)
+        }
+    }
+
+    // --- Persistence helpers (fixes random order on restart) ---
+
+    /** ✅ Save order as JSON array (keeps exact order) */
+    private fun saveOrder(context: Context) {
+        val prefs = context.getSharedPreferences("stickers", Context.MODE_PRIVATE)
+        val jsonArray = JSONArray()
+        stickers.forEach { jsonArray.put(it.toString()) }
+        prefs.edit().putString("uris_json", jsonArray.toString()).apply()
+    }
+
+    companion object {
+        /** ✅ Load ordered stickers */
+        fun loadOrdered(context: Context): MutableList<Uri> {
+            val prefs = context.getSharedPreferences("stickers", Context.MODE_PRIVATE)
+            val json = prefs.getString("uris_json", "[]")
+            val array = JSONArray(json)
+            val list = mutableListOf<Uri>()
+            for (i in 0 until array.length()) {
+                list.add(Uri.parse(array.getString(i)))
+            }
+            return list
         }
     }
 }
