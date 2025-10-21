@@ -16,7 +16,6 @@ import java.io.File
 import java.io.FileOutputStream
 
 class MainActivity : AppCompatActivity(), StickerAdapter.StickerListener {
-
     private lateinit var binding: ActivityMainBinding
     private lateinit var adapter: StickerAdapter
     private val prefs by lazy { getSharedPreferences("stickers", MODE_PRIVATE) }
@@ -31,9 +30,12 @@ class MainActivity : AppCompatActivity(), StickerAdapter.StickerListener {
         binding.recycler.adapter = adapter
 
         binding.addButton.setOnClickListener { openSystemImagePicker() }
+
+        // ✅ Handle import when opened via "Share → Zaticker"
+        handleShareIntent(intent)
     }
 
-    /** Pick multiple images from gallery */
+    /** ✅ Allow picking multiple images from gallery */
     private fun openSystemImagePicker() {
         val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI).apply {
             type = "image/*"
@@ -60,7 +62,7 @@ class MainActivity : AppCompatActivity(), StickerAdapter.StickerListener {
             }
         }
 
-    /** Save selected image to app-private storage */
+    /** ✅ Import and save image into app-private files */
     private fun importToAppData(src: Uri) {
         try {
             val input = contentResolver.openInputStream(src) ?: return
@@ -70,10 +72,8 @@ class MainActivity : AppCompatActivity(), StickerAdapter.StickerListener {
 
             val uri = Uri.fromFile(file)
 
-            // Save sticker URI to SharedPreferences
+            // ✅ Save and refresh
             saveSticker(uri)
-
-            // Add sticker to RecyclerView
             adapter.addStickerAtTop(uri)
             binding.recycler.scrollToPosition(0)
         } catch (e: Exception) {
@@ -81,40 +81,35 @@ class MainActivity : AppCompatActivity(), StickerAdapter.StickerListener {
         }
     }
 
-    /** Save sticker URI in SharedPreferences */
+    /** ✅ Save sticker list in SharedPreferences */
     private fun saveSticker(uri: Uri) {
         val set = prefs.getStringSet("uris", mutableSetOf())?.toMutableSet() ?: mutableSetOf()
-        val newSet = mutableSetOf(uri.toString())
-        newSet.addAll(set)
-        prefs.edit().putStringSet("uris", newSet).apply()
+        val newList = mutableListOf(uri.toString())
+        newList.addAll(set)
+        prefs.edit().putStringSet("uris", newList.toSet()).apply()
     }
 
-    /** Load stickers from SharedPreferences (newest first) */
+    /** ✅ Load saved stickers (newest first) */
     private fun loadStickers(): MutableList<Uri> {
         val set = prefs.getStringSet("uris", emptySet()) ?: emptySet()
         return set.map { Uri.parse(it) }.toMutableList()
     }
 
-    /** Share sticker via Zalo (only is_sticker + type) */
+    /** ✅ Share sticker to Zalo (real sticker intent) */
     override fun onStickerClick(uri: Uri) {
         try {
             val file = File(uri.path!!)
-            val contentUri = FileProvider.getUriForFile(
-                this,
-                "$packageName.provider",
-                file
-            )
+            val contentUri = FileProvider.getUriForFile(this, "$packageName.provider", file)
 
             val intent = Intent(Intent.ACTION_SEND).apply {
                 type = "image/png"
                 putExtra(Intent.EXTRA_STREAM, contentUri)
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
 
-                // Sticker extras
+                // Only real sticker keys
                 putExtra("is_sticker", true)
                 putExtra("type", 3)
 
-                // Target Zalo sticker activity
                 setClassName("com.zing.zalo", "com.zing.zalo.ui.TempShareViaActivity")
             }
 
@@ -124,33 +119,45 @@ class MainActivity : AppCompatActivity(), StickerAdapter.StickerListener {
         }
     }
 
-    /** Remove sticker from app AND delete file from internal storage */
+    /** ✅ Delete sticker and remove file from /data */
     override fun onStickerLongClick(uri: Uri) {
         AlertDialog.Builder(this)
             .setTitle("Delete Sticker")
-            .setMessage("Do you want to delete this sticker? This will remove it from the app and delete the file.")
+            .setMessage("Do you want to delete this sticker?")
             .setPositiveButton("Delete") { _, _ ->
-                // Remove from RecyclerView
-                adapter.removeSticker(uri)
-
-                // Remove URI from SharedPreferences
-                val currentSet = prefs.getStringSet("uris", mutableSetOf())?.toMutableSet() ?: mutableSetOf()
-                currentSet.remove(uri.toString())
-                prefs.edit().putStringSet("uris", currentSet).apply()
-
-                // ✅ Delete actual file
                 try {
                     val file = File(uri.path ?: "")
-                    if (file.exists()) {
-                        file.delete()
-                    }
-                } catch (_: Exception) {
-                    // ignore deletion errors
-                }
+                    if (file.exists()) file.delete()
 
-                Toast.makeText(this, "Sticker deleted", Toast.LENGTH_SHORT).show()
+                    adapter.removeSticker(uri)
+                    val set = prefs.getStringSet("uris", mutableSetOf())?.toMutableSet()
+                    set?.remove(uri.toString())
+                    prefs.edit().putStringSet("uris", set).apply()
+
+                    Toast.makeText(this, "Deleted", Toast.LENGTH_SHORT).show()
+                } catch (e: Exception) {
+                    Toast.makeText(this, "Delete failed", Toast.LENGTH_SHORT).show()
+                }
             }
             .setNegativeButton("Cancel", null)
             .show()
+    }
+
+    /** ✅ Handle share intents (import shared stickers) */
+    private fun handleShareIntent(intent: Intent?) {
+        if (intent == null) return
+
+        when (intent.action) {
+            Intent.ACTION_SEND -> {
+                val uri = intent.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)
+                if (uri != null) importToAppData(uri)
+            }
+            Intent.ACTION_SEND_MULTIPLE -> {
+                val uris = intent.getParcelableArrayListExtra<Uri>(Intent.EXTRA_STREAM)
+                if (!uris.isNullOrEmpty()) {
+                    for (uri in uris) importToAppData(uri)
+                }
+            }
+        }
     }
 }
