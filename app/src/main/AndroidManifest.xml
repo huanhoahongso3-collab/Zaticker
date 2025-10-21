@@ -19,18 +19,28 @@
         android:usesCleartextTraffic="true"
         tools:targetApi="33">
 
-        <!-- Main activity -->
+        <!-- ✅ Main launcher activity -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
             android:configChanges="orientation|screenSize|keyboardHidden">
+
+            <!-- Launcher -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            <!-- ✅ Allow import from share intent (single or multiple images) -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <action android:name="android.intent.action.SEND_MULTIPLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="image/*" />
+            </intent-filter>
         </activity>
 
-        <!-- ✅ FileProvider for sharing internal stickers with Zalo -->
+        <!-- ✅ FileProvider for sticker sharing -->
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.provider"
@@ -42,5 +52,4 @@
         </provider>
 
     </application>
-
 </manifest>
