@@ -16,6 +16,7 @@ import java.io.File
 import java.io.FileOutputStream
 
 class MainActivity : AppCompatActivity(), StickerAdapter.StickerListener {
+
     private lateinit var binding: ActivityMainBinding
     private lateinit var adapter: StickerAdapter
     private val prefs by lazy { getSharedPreferences("stickers", MODE_PRIVATE) }
@@ -32,7 +33,7 @@ class MainActivity : AppCompatActivity(), StickerAdapter.StickerListener {
         binding.addButton.setOnClickListener { openSystemImagePicker() }
     }
 
-    /** ✅ Pick multiple images */
+    /** Pick multiple images from gallery */
     private fun openSystemImagePicker() {
         val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI).apply {
             type = "image/*"
@@ -59,7 +60,7 @@ class MainActivity : AppCompatActivity(), StickerAdapter.StickerListener {
             }
         }
 
-    /** ✅ Save selected image to app-private storage */
+    /** Save selected image to app-private storage */
     private fun importToAppData(src: Uri) {
         try {
             val input = contentResolver.openInputStream(src) ?: return
@@ -69,10 +70,10 @@ class MainActivity : AppCompatActivity(), StickerAdapter.StickerListener {
 
             val uri = Uri.fromFile(file)
 
-            // ✅ Save sticker first
+            // Save sticker URI to SharedPreferences
             saveSticker(uri)
 
-            // ✅ Add new sticker at top (index 0)
+            // Add sticker to RecyclerView
             adapter.addStickerAtTop(uri)
             binding.recycler.scrollToPosition(0)
         } catch (e: Exception) {
@@ -80,21 +81,21 @@ class MainActivity : AppCompatActivity(), StickerAdapter.StickerListener {
         }
     }
 
-    /** ✅ Persist sticker list in SharedPreferences */
+    /** Save sticker URI in SharedPreferences */
     private fun saveSticker(uri: Uri) {
         val set = prefs.getStringSet("uris", mutableSetOf())?.toMutableSet() ?: mutableSetOf()
-        val newList = mutableListOf(uri.toString())
-        newList.addAll(set)
-        prefs.edit().putStringSet("uris", newList.toSet()).apply()
+        val newSet = mutableSetOf(uri.toString())
+        newSet.addAll(set)
+        prefs.edit().putStringSet("uris", newSet).apply()
     }
 
-    /** ✅ Load stickers, newest first */
+    /** Load stickers from SharedPreferences (newest first) */
     private fun loadStickers(): MutableList<Uri> {
         val set = prefs.getStringSet("uris", emptySet()) ?: emptySet()
         return set.map { Uri.parse(it) }.toMutableList()
     }
 
-    /** ✅ Share sticker as a *real sticker* (only is_sticker + type) */
+    /** Share sticker via Zalo (only is_sticker + type) */
     override fun onStickerClick(uri: Uri) {
         try {
             val file = File(uri.path!!)
@@ -109,11 +110,11 @@ class MainActivity : AppCompatActivity(), StickerAdapter.StickerListener {
                 putExtra(Intent.EXTRA_STREAM, contentUri)
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
 
-                // ✅ Only these two keys matter
+                // Sticker extras
                 putExtra("is_sticker", true)
                 putExtra("type", 3)
 
-                // ✅ Target Zalo sticker share
+                // Target Zalo sticker activity
                 setClassName("com.zing.zalo", "com.zing.zalo.ui.TempShareViaActivity")
             }
 
@@ -123,22 +124,31 @@ class MainActivity : AppCompatActivity(), StickerAdapter.StickerListener {
         }
     }
 
-    /** ✅ Confirm before delete */
+    /** Remove sticker from app AND delete file from internal storage */
     override fun onStickerLongClick(uri: Uri) {
         AlertDialog.Builder(this)
             .setTitle("Delete Sticker")
-            .setMessage("Do you want to delete this sticker?")
+            .setMessage("Do you want to delete this sticker? This will remove it from the app and delete the file.")
             .setPositiveButton("Delete") { _, _ ->
+                // Remove from RecyclerView
+                adapter.removeSticker(uri)
+
+                // Remove URI from SharedPreferences
+                val currentSet = prefs.getStringSet("uris", mutableSetOf())?.toMutableSet() ?: mutableSetOf()
+                currentSet.remove(uri.toString())
+                prefs.edit().putStringSet("uris", currentSet).apply()
+
+                // ✅ Delete actual file
                 try {
-                    File(uri.path ?: "").delete()
-                    adapter.removeSticker(uri)
-                    val set = prefs.getStringSet("uris", mutableSetOf())?.toMutableSet()
-                    set?.remove(uri.toString())
-                    prefs.edit().putStringSet("uris", set).apply()
-                    Toast.makeText(this, "Deleted", Toast.LENGTH_SHORT).show()
-                } catch (e: Exception) {
-                    Toast.makeText(this, "Delete failed", Toast.LENGTH_SHORT).show()
+                    val file = File(uri.path ?: "")
+                    if (file.exists()) {
+                        file.delete()
+                    }
+                } catch (_: Exception) {
+                    // ignore deletion errors
                 }
+
+                Toast.makeText(this, "Sticker deleted", Toast.LENGTH_SHORT).show()
             }
             .setNegativeButton("Cancel", null)
             .show()
