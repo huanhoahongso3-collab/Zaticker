@@ -43,13 +43,21 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
 
-      # 6️⃣ Build Debug APK
-      - name: Build Debug APK
-        run: ./gradlew assembleDebug --stacktrace
+      # 6️⃣ Build Debug and Release APKs
+      - name: Build Debug and Release APKs
+        run: |
+          ./gradlew assembleDebug assembleRelease --stacktrace
 
-      # 7️⃣ Upload APK artifact
-      - name: Upload APK artifact
+      # 7️⃣ Upload Debug APK artifact
+      - name: Upload Debug APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: Zaticker-debug-apk
           path: app/build/outputs/apk/debug/app-debug.apk
+
+      # 8️⃣ Upload Unsigned Release APK artifact
+      - name: Upload Unsigned Release APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Zaticker-release-unsigned-apk
+          path: app/build/outputs/apk/release/app-release-unsigned.apk
