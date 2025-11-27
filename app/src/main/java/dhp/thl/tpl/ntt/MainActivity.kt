@@ -148,23 +148,45 @@ class MainActivity : AppCompatActivity(), StickerAdapter.StickerListener {
         }
     }
 
-    /** Delete sticker with confirmation */
+    /** Long press: 3-option dialog (Export / Delete / Cancel) */
     override fun onStickerLongClick(uri: Uri) {
         AlertDialog.Builder(this)
-            .setTitle(getString(R.string.delete_title))
-            .setMessage(getString(R.string.delete_message))
-            .setPositiveButton(getString(R.string.delete)) { _, _ ->
-                try {
-                    val file = File(uri.path ?: "")
-                    if (file.exists()) file.delete()
-                    adapter.removeSticker(this, uri)
-                    Toast.makeText(this, getString(R.string.deleted), Toast.LENGTH_SHORT).show()
-                } catch (e: Exception) {
-                    Toast.makeText(this, getString(R.string.delete_failed), Toast.LENGTH_SHORT).show()
-                }
-            }
-            .setNegativeButton(getString(R.string.cancel), null)
+            .setTitle(getString(R.string.sticker_options_title))
+            .setMessage(getString(R.string.sticker_options_message))
+            .setPositiveButton(getString(R.string.export)) { _, _ -> exportSticker(uri) }
+            .setNegativeButton(getString(R.string.delete)) { _, _ -> deleteSticker(uri) }
+            .setNeutralButton(getString(R.string.cancel), null)
             .show()
+    }
+
+    /** Delete sticker immediately */
+    private fun deleteSticker(uri: Uri) {
+        try {
+            val file = File(uri.path ?: "")
+            if (file.exists()) file.delete()
+            adapter.removeSticker(this, uri)
+            Toast.makeText(this, getString(R.string.deleted), Toast.LENGTH_SHORT).show()
+        } catch (e: Exception) {
+            Toast.makeText(this, getString(R.string.delete_failed), Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    /** Export sticker to Pictures/Zaticker folder */
+    private fun exportSticker(uri: Uri) {
+        try {
+            val input = contentResolver.openInputStream(uri) ?: return
+            val baseDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
+            val folder = File(baseDir, "Zaticker")
+            if (!folder.exists()) folder.mkdirs()
+
+            val name = "zaticker_export_${System.currentTimeMillis()}.png"
+            val file = File(folder, name)
+            FileOutputStream(file).use { out -> input.copyTo(out) }
+
+            Toast.makeText(this, getString(R.string.sticker_exported, file.absolutePath), Toast.LENGTH_LONG).show()
+        } catch (e: Exception) {
+            Toast.makeText(this, getString(R.string.export_failed, e.message), Toast.LENGTH_SHORT).show()
+        }
     }
 
     /** Import stickers via external share intents */
@@ -183,4 +205,3 @@ class MainActivity : AppCompatActivity(), StickerAdapter.StickerListener {
         }
     }
 }
-
