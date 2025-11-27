@@ -1,14 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- App -->
-    <string name="app_name">Za Hình dán</string>
+    <string name="app_name">Zaticker</string>
+
+    <!-- Share Targets -->
+    <string name="share_import">Nhập vào Zaticker</string>
+    <string name="share_quick_zalo">Chia sẻ nhanh lên Zalo</string>
+    <string name="share_import_and_zalo">Nhập vào Zaticker + Chia sẻ Zalo</string>
 
     <!-- Main Actions -->
     <string name="add_image">Thêm ảnh</string>
-    <string name="choose_action">Chọn thao tác</string>
-    <string name="import_to_app">Nhập vào Zaticker</string>
-    <string name="quick_share_zalo">Chia sẻ nhanh lên Zalo</string>
-    <string name="import_and_share_zalo">Nhập vào Zaticker + Chia sẻ Zalo</string>
 
     <!-- Notifications / Errors -->
     <string name="no_images_selected">Không có ảnh nào được chọn</string>
