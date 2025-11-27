@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App -->
+    <string name="app_name">Za Hình dán</string>
+
+    <!-- Main Actions -->
+    <string name="add_image">Thêm ảnh</string>
+    <string name="choose_action">Chọn thao tác</string>
+    <string name="import_to_app">Nhập vào Zaticker</string>
+    <string name="quick_share_zalo">Chia sẻ nhanh lên Zalo</string>
+    <string name="import_and_share_zalo">Nhập vào Zaticker + Chia sẻ Zalo</string>
+
+    <!-- Notifications / Errors -->
+    <string name="no_images_selected">Không có ảnh nào được chọn</string>
+    <string name="import_failed">Lỗi nhập ảnh: %1$s</string>
+    <string name="share_failed">Không thể chia sẻ Zalo</string>
+    <string name="zalo_not_installed">Zalo chưa cài hoặc lỗi chia sẻ</string>
+    <string name="delete_failed">Lỗi xóa sticker</string>
+
+    <!-- Delete Dialog -->
+    <string name="delete_sticker">Xóa Sticker</string>
+    <string name="delete_sticker_confirm">Bạn có muốn xóa sticker này không?</string>
+    <string name="delete">Xóa</string>
+    <string name="cancel">Hủy</string>
+    <string name="deleted">Đã xóa</string>
+
+    <!-- File prefix -->
+    <string name="file_prefix">zaticker_</string>
+
+    <!-- Progress / temporary states -->
+    <string name="importing">Đang nhập...</string>
+    <string name="sharing">Đang chia sẻ...</string>
+</resources>
