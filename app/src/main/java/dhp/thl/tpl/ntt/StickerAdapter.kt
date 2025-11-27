@@ -1,198 +1,107 @@
 package dhp.thl.tpl.ntt
 
-import android.app.AlertDialog
-import android.content.ClipData
-import android.content.Intent
+import android.content.Context
 import android.net.Uri
-import android.os.Bundle
-import android.provider.MediaStore
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.FileProvider
-import androidx.recyclerview.widget.GridLayoutManager
-import dhp.thl.tpl.ntt.databinding.ActivityMainBinding
-import java.io.File
-import java.io.FileOutputStream
+import androidx.appcompat.app.AlertDialog
+import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 
-class MainActivity : AppCompatActivity(), StickerAdapter.StickerListener {
-    private lateinit var binding: ActivityMainBinding
-    private lateinit var adapter: StickerAdapter
+class StickerAdapter(
+    private val stickers: MutableList<Uri>,
+    private val listener: StickerListener
+) : RecyclerView.Adapter<StickerAdapter.ViewHolder>() {
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        binding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-
-        adapter = StickerAdapter(StickerAdapter.loadOrdered(this), this)
-        binding.recycler.layoutManager = GridLayoutManager(this, 3)
-        binding.recycler.adapter = adapter
-
-        binding.addButton.setOnClickListener { openSystemImagePicker() }
-
-        handleShareIntent(intent)
+    interface StickerListener {
+        fun onStickerClick(uri: Uri)
+        fun onStickerLongClick(uri: Uri)
     }
 
-    /** Pick multiple images */
-    private fun openSystemImagePicker() {
-        val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI).apply {
-            type = "image/*"
-            putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+        val view = LayoutInflater.from(parent.context)
+            .inflate(R.layout.item_sticker, parent, false)
+        return ViewHolder(view)
+    }
+
+    override fun getItemCount(): Int = stickers.size
+
+    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+        val uri = stickers[position]
+        holder.bind(uri)
+    }
+
+    fun addStickerAtTop(context: Context, uri: Uri) {
+        stickers.add(0, uri)
+        notifyItemInserted(0)
+        Toast.makeText(context, context.getString(R.string.importing), Toast.LENGTH_SHORT).show()
+    }
+
+    fun removeSticker(context: Context, uri: Uri) {
+        val index = stickers.indexOf(uri)
+        if (index != -1) {
+            stickers.removeAt(index)
+            notifyItemRemoved(index)
+            Toast.makeText(context, context.getString(R.string.deleted), Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(context, context.getString(R.string.delete_failed), Toast.LENGTH_SHORT).show()
         }
-        pickImages.launch(intent)
     }
 
-    private val pickImages =
-        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            if (result.resultCode == RESULT_OK) {
-                val clipData: ClipData? = result.data?.clipData
-                val uri: Uri? = result.data?.data
+    fun getStickerAt(position: Int): Uri = stickers[position]
 
-                when {
-                    clipData != null -> {
-                        for (i in 0 until clipData.itemCount) {
-                            importToAppData(clipData.getItemAt(i).uri)
-                        }
-                    }
-                    uri != null -> importToAppData(uri)
-                    else -> Toast.makeText(
-                        this,
-                        getString(R.string.no_images_selected),
-                        Toast.LENGTH_SHORT
-                    ).show()
+    fun addAll(newStickers: List<Uri>) {
+        stickers.addAll(newStickers)
+        notifyDataSetChanged()
+    }
+
+    fun clear() {
+        stickers.clear()
+        notifyDataSetChanged()
+    }
+
+    class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        private val imageView: ImageView = itemView.findViewById(R.id.sticker_image)
+
+        fun bind(uri: Uri) {
+            Glide.with(itemView.context)
+                .load(uri)
+                .centerCrop()
+                .into(imageView)
+
+            itemView.setOnClickListener {
+                (itemView.context as? StickerListener)?.onStickerClick(uri)
+            }
+
+            itemView.setOnLongClickListener {
+                showDeleteDialog(uri)
+                true
+            }
+        }
+
+        private fun showDeleteDialog(uri: Uri) {
+            val context = itemView.context
+            if (context !is StickerListener) return
+
+            AlertDialog.Builder(context)
+                .setTitle(context.getString(R.string.delete_sticker))
+                .setMessage(context.getString(R.string.delete_sticker_confirm))
+                .setPositiveButton(context.getString(R.string.delete)) { _, _ ->
+                    context.onStickerLongClick(uri)
                 }
-            }
-        }
-
-    /** Save image into app-private storage */
-    private fun importToAppData(src: Uri) {
-        try {
-            val input = contentResolver.openInputStream(src) ?: return
-            val name = "${getString(R.string.file_prefix)}${System.currentTimeMillis()}.png"
-            val file = File(filesDir, name)
-            FileOutputStream(file).use { out -> input.copyTo(out) }
-
-            val uri = Uri.fromFile(file)
-
-            adapter.addStickerAtTop(this, uri)
-            binding.recycler.scrollToPosition(0)
-        } catch (e: Exception) {
-            Toast.makeText(
-                this,
-                getString(R.string.import_failed, e.message ?: ""),
-                Toast.LENGTH_SHORT
-            ).show()
+                .setNegativeButton(context.getString(R.string.cancel), null)
+                .show()
         }
     }
 
-    /** Share directly to Zalo without importing */
-    private fun shareDirectToZalo(src: Uri) {
-        try {
-            val input = contentResolver.openInputStream(src) ?: return
-
-            val temp = File(cacheDir, "temp_zshare_${System.currentTimeMillis()}.png")
-            FileOutputStream(temp).use { out -> input.copyTo(out) }
-
-            val contentUri = FileProvider.getUriForFile(this, "$packageName.provider", temp)
-
-            val intent = Intent(Intent.ACTION_SEND).apply {
-                type = "image/png"
-                putExtra(Intent.EXTRA_STREAM, contentUri)
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-
-                putExtra("is_sticker", true)
-                putExtra("type", 3)
-
-                setClassName("com.zing.zalo", "com.zing.zalo.ui.TempShareViaActivity")
-            }
-
-            startActivity(intent)
-        } catch (e: Exception) {
-            Toast.makeText(this, getString(R.string.share_failed), Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    /** Sticker clicked -> share to Zalo */
-    override fun onStickerClick(uri: Uri) {
-        try {
-            val file = File(uri.path!!)
-            val contentUri = FileProvider.getUriForFile(this, "$packageName.provider", file)
-
-            val intent = Intent(Intent.ACTION_SEND).apply {
-                type = "image/png"
-                putExtra(Intent.EXTRA_STREAM, contentUri)
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-
-                putExtra("is_sticker", true)
-                putExtra("type", 3)
-
-                setClassName("com.zing.zalo", "com.zing.zalo.ui.TempShareViaActivity")
-            }
-
-            startActivity(intent)
-        } catch (e: Exception) {
-            Toast.makeText(this, getString(R.string.zalo_not_installed), Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    /** Long press delete */
-    override fun onStickerLongClick(uri: Uri) {
-        AlertDialog.Builder(this)
-            .setTitle(getString(R.string.delete_sticker))
-            .setMessage(getString(R.string.delete_sticker_confirm))
-            .setPositiveButton(getString(R.string.delete)) { _, _ ->
-                try {
-                    val file = File(uri.path ?: "")
-                    if (file.exists()) file.delete()
-
-                    adapter.removeSticker(this, uri)
-                    Toast.makeText(this, getString(R.string.deleted), Toast.LENGTH_SHORT).show()
-                } catch (e: Exception) {
-                    Toast.makeText(this, getString(R.string.delete_failed), Toast.LENGTH_SHORT).show()
-                }
-            }
-            .setNegativeButton(getString(R.string.cancel), null)
-            .show()
-    }
-
-    /** Extended share actions */
-    private fun handleShareIntent(intent: Intent?) {
-        if (intent == null) return
-
-        when (intent.action) {
-
-            /** SINGLE IMAGE */
-            Intent.ACTION_SEND -> {
-                val uri = intent.getParcelableExtra<Uri>(Intent.EXTRA_STREAM) ?: return
-
-                val options = arrayOf(
-                    getString(R.string.import_to_app),
-                    getString(R.string.quick_share_zalo),
-                    getString(R.string.import_and_share_zalo)
-                )
-
-                AlertDialog.Builder(this)
-                    .setTitle(getString(R.string.choose_action))
-                    .setItems(options) { _, which ->
-                        when (which) {
-                            0 -> importToAppData(uri)
-                            1 -> shareDirectToZalo(uri)
-                            2 -> {
-                                importToAppData(uri)
-                                shareDirectToZalo(uri)
-                            }
-                        }
-                    }
-                    .show()
-            }
-
-            /** MULTIPLE IMAGES → import only */
-            Intent.ACTION_SEND_MULTIPLE -> {
-                val uris = intent.getParcelableArrayListExtra<Uri>(Intent.EXTRA_STREAM)
-                if (!uris.isNullOrEmpty()) {
-                    for (uri in uris) importToAppData(uri)
-                }
-            }
+    companion object {
+        fun loadOrdered(context: Context): MutableList<Uri> {
+            // Load stickers from internal storage or database
+            // For simplicity, return empty list here
+            return mutableListOf()
         }
     }
 }
