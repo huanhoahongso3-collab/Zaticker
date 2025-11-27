@@ -5,6 +5,8 @@ import android.app.AlertDialog
 import android.content.ClipData
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -31,44 +33,42 @@ class MainActivity : AppCompatActivity(), StickerAdapter.StickerListener {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // --- Toolbar setup ---
-        val toolbar = binding.topAppBar
-        setSupportActionBar(toolbar)
-        supportActionBar?.title = getString(R.string.app_name)
+        // --- Setup default ActionBar colors dynamically ---
+        supportActionBar?.let { actionBar ->
+            actionBar.title = getString(R.string.app_name)
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            // Android 12+ dynamic (Monet) color
-            val dynamicColor = getColor(android.R.color.system_accent1_500)
-            toolbar.setBackgroundColor(dynamicColor)
-            toolbar.setTitleTextColor(ContextCompat.getColor(this, android.R.color.white))
-        } else {
-            // Fallback for Android 11 and below
-            val isDark = (resources.configuration.uiMode and
-                    android.content.res.Configuration.UI_MODE_NIGHT_MASK) ==
-                    android.content.res.Configuration.UI_MODE_NIGHT_YES
-
-            if (isDark) {
-                toolbar.setBackgroundColor(ContextCompat.getColor(this, R.color.toolbar_dark_bg))
-                toolbar.setTitleTextColor(ContextCompat.getColor(this, R.color.toolbar_dark_text))
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                // Android 12+: dynamic wallpaper-based color
+                val dynamicColor = getColor(android.R.color.system_accent1_500)
+                actionBar.setBackgroundDrawable(ColorDrawable(dynamicColor))
+                actionBar.setTitleTextColor(Color.WHITE)
             } else {
-                toolbar.setBackgroundColor(ContextCompat.getColor(this, R.color.toolbar_light_bg))
-                toolbar.setTitleTextColor(ContextCompat.getColor(this, R.color.toolbar_light_text))
+                // Fallback for older Android
+                if ((resources.configuration.uiMode and 0x30) == 0x20) {
+                    // Dark theme
+                    actionBar.setBackgroundDrawable(ColorDrawable(Color.BLACK))
+                    actionBar.setTitleTextColor(Color.WHITE)
+                } else {
+                    // Light theme
+                    actionBar.setBackgroundDrawable(ColorDrawable(Color.WHITE))
+                    actionBar.setTitleTextColor(Color.BLACK)
+                }
             }
         }
 
-        // --- Sticker adapter ---
+        // --- Load stickers from storage ---
         adapter = StickerAdapter(StickerAdapter.loadOrdered(this), this)
         binding.recycler.layoutManager = GridLayoutManager(this, 3)
         binding.recycler.adapter = adapter
 
-        // --- Legacy storage permission for Android 9 and below ---
+        // Request legacy storage permission for Android 9 and below
         if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
             requestLegacyPermissions()
         }
 
         binding.addButton.setOnClickListener { openSystemImagePicker() }
 
-        // --- Handle external share intents ---
+        // Handle external share intents
         handleShareIntent(intent)
     }
 
@@ -79,7 +79,7 @@ class MainActivity : AppCompatActivity(), StickerAdapter.StickerListener {
         }
     }
 
-    /** Pick multiple images */
+    /** Allow picking multiple images */
     private fun openSystemImagePicker() {
         val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI).apply {
             type = "image/*"
@@ -106,7 +106,7 @@ class MainActivity : AppCompatActivity(), StickerAdapter.StickerListener {
             }
         }
 
-    /** Import based on API level */
+    /** Save based on API level */
     private fun importToAppOrExternal(src: Uri) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             importToAppData(src)
@@ -115,7 +115,7 @@ class MainActivity : AppCompatActivity(), StickerAdapter.StickerListener {
         }
     }
 
-    /** Scoped storage Android 10+ */
+    /** Scoped storage for Android 10+ */
     private fun importToAppData(src: Uri) {
         try {
             val input = contentResolver.openInputStream(src) ?: return
@@ -173,7 +173,7 @@ class MainActivity : AppCompatActivity(), StickerAdapter.StickerListener {
         }
     }
 
-    /** Long press: Sticker options dialog */
+    /** Long press: 3-option dialog (Export / Delete / Cancel) */
     override fun onStickerLongClick(uri: Uri) {
         AlertDialog.Builder(this)
             .setTitle(getString(R.string.sticker_options_title))
@@ -196,7 +196,7 @@ class MainActivity : AppCompatActivity(), StickerAdapter.StickerListener {
         }
     }
 
-    /** Export sticker to Pictures/Zaticker */
+    /** Export sticker to Pictures/Zaticker folder */
     private fun exportSticker(uri: Uri) {
         try {
             val input = contentResolver.openInputStream(uri) ?: return
@@ -214,7 +214,7 @@ class MainActivity : AppCompatActivity(), StickerAdapter.StickerListener {
         }
     }
 
-    /** Handle external share intents */
+    /** Import stickers via external share intents */
     private fun handleShareIntent(intent: Intent?) {
         if (intent == null) return
 
