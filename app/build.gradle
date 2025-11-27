@@ -8,10 +8,10 @@ android {
 
     defaultConfig {
         applicationId 'dhp.thl.tpl.ntt'
-        minSdk 29
+        minSdk 23
         targetSdk 38
         versionCode 2026
-        versionName '3.81'  // ✅ updated version name
+        versionName '2.6'  // ✅ updated version name
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }

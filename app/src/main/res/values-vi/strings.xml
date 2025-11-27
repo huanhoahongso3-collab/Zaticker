@@ -1,44 +1,18 @@
 <resources>
-    <string name="app_name">Za Hình dán</string>
+    <string name="app_name">Za Hình Dán</string>
 
-    <!-- Main actions -->
-    <string name="choose_action">Chọn hành động</string>
-    <string name="import_sticker">Nhập sticker</string>
-    <string name="share_zalo">Chia sẻ Zalo</string>
-    <string name="import_share_zalo">Nhập &amp; Chia sẻ Zalo</string>
-    <string name="delete_sticker">Xóa sticker</string>
-    <string name="cancel">Hủy</string>
-
-    <!-- Sticker messages -->
-    <string name="sticker_imported">Đã nhập sticker thành công</string>
-    <string name="sticker_deleted">Đã xóa sticker</string>
-    <string name="sticker_shared">Đã chia sẻ sticker lên Zalo</string>
-    <string name="error_importing">Lỗi khi nhập sticker</string>
-    <string name="error_sharing">Lỗi khi chia sẻ sticker</string>
-    <string name="error_generic">Có lỗi xảy ra</string>
-
-    <!-- Permissions -->
-    <string name="permission_storage_needed">Cần quyền lưu trữ để nhập sticker</string>
-    <string name="permission_denied">Quyền bị từ chối</string>
-
-    <!-- Import/Share -->
-    <string name="no_images_selected">Chưa chọn ảnh</string>
-    <string name="file_prefix">sticker_</string>
+    <!-- Main UI -->
+    <string name="no_images_selected">Không có ảnh nào được chọn</string>
     <string name="import_failed">Nhập thất bại: %1$s</string>
-    <string name="share_failed">Chia sẻ thất bại</string>
-    <string name="zalo_not_installed">Chưa cài Zalo</string>
-    <string name="delete_sticker_confirm">Bạn có chắc muốn xóa sticker này không?</string>
+    <string name="legacy_import_failed">Nhập theo chế độ cũ thất bại: %1$s</string>
+    <string name="zalo_share_failed">Chia sẻ Zalo thất bại</string>
+
+    <!-- Delete dialog -->
+    <string name="delete_title">Xóa Sticker</string>
+    <string name="delete_message">Bạn có muốn xóa sticker này?</string>
     <string name="delete">Xóa</string>
-    <string name="deleted">Đã xóa sticker</string>
-    <string name="delete_failed">Xóa sticker thất bại</string>
-
-    <!-- Share options -->
-    <string name="share_import">Chỉ nhập</string>
-    <string name="share_quick_zalo">Chỉ chia sẻ Zalo</string>
-    <string name="share_import_and_zalo">Nhập &amp; Chia sẻ Zalo</string>
-
-    <!-- UI -->
-    <string name="loading">Đang tải...</string>
-    <string name="no_stickers">Không có sticker</string>
-    <string name="retry">Thử lại</string>
+    <string name="cancel">Hủy</string>
+    <string name="deleted">Đã xóa</string>
+    <string name="delete_failed">Xóa thất bại</string>
 </resources>
+

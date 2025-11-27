@@ -1,13 +1,20 @@
 package dhp.thl.tpl.ntt
 
+import android.Manifest
 import android.app.AlertDialog
+import android.content.ClipData
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.os.Environment
 import android.provider.MediaStore
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.recyclerview.widget.GridLayoutManager
 import dhp.thl.tpl.ntt.databinding.ActivityMainBinding
@@ -24,16 +31,30 @@ class MainActivity : AppCompatActivity(), StickerAdapter.StickerListener {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // Load stickers from storage
         adapter = StickerAdapter(StickerAdapter.loadOrdered(this), this)
         binding.recycler.layoutManager = GridLayoutManager(this, 3)
         binding.recycler.adapter = adapter
 
+        // Request legacy storage permission for Android 9 and below
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
+            requestLegacyPermissions()
+        }
+
         binding.addButton.setOnClickListener { openSystemImagePicker() }
 
+        // Handle external share intents
         handleShareIntent(intent)
     }
 
-    /** Pick multiple images from gallery */
+    private fun requestLegacyPermissions() {
+        val perm = Manifest.permission.WRITE_EXTERNAL_STORAGE
+        if (ContextCompat.checkSelfPermission(this, perm) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, arrayOf(perm), 999)
+        }
+    }
+
+    /** Allow picking multiple images */
     private fun openSystemImagePicker() {
         val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI).apply {
             type = "image/*"
@@ -42,66 +63,76 @@ class MainActivity : AppCompatActivity(), StickerAdapter.StickerListener {
         pickImages.launch(intent)
     }
 
-    private val pickImages = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == RESULT_OK) {
-            val clipData = result.data?.clipData
-            val uri = result.data?.data
+    private val pickImages =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == RESULT_OK) {
+                val clipData: ClipData? = result.data?.clipData
+                val uri: Uri? = result.data?.data
 
-            when {
-                clipData != null -> {
-                    for (i in 0 until clipData.itemCount) {
-                        importToAppData(clipData.getItemAt(i).uri)
+                when {
+                    clipData != null -> {
+                        for (i in 0 until clipData.itemCount) {
+                            importToAppOrExternal(clipData.getItemAt(i).uri)
+                        }
                     }
+                    uri != null -> importToAppOrExternal(uri)
+                    else -> Toast.makeText(this, getString(R.string.no_images_selected), Toast.LENGTH_SHORT).show()
                 }
-                uri != null -> importToAppData(uri)
-                else -> Toast.makeText(this, getString(R.string.no_images_selected), Toast.LENGTH_SHORT).show()
             }
+        }
+
+    /** Save based on API level */
+    private fun importToAppOrExternal(src: Uri) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            importToAppData(src)
+        } else {
+            importToExternalStorage(src)
         }
     }
 
-    /** Import and save image into app storage */
+    /** Scoped storage for Android 10+ */
     private fun importToAppData(src: Uri) {
         try {
             val input = contentResolver.openInputStream(src) ?: return
-            val name = "${getString(R.string.file_prefix)}${System.currentTimeMillis()}.png"
+            val name = "zaticker_${System.currentTimeMillis()}.png"
             val file = File(filesDir, name)
             FileOutputStream(file).use { out -> input.copyTo(out) }
-
             val uri = Uri.fromFile(file)
+
             adapter.addStickerAtTop(this, uri)
             binding.recycler.scrollToPosition(0)
         } catch (e: Exception) {
-            Toast.makeText(this, getString(R.string.import_failed, e.message ?: ""), Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.import_failed, e.message), Toast.LENGTH_SHORT).show()
         }
     }
 
-    /** Share image directly to Zalo */
-    private fun shareDirectToZalo(src: Uri) {
+    /** Legacy storage for Android 9 and below */
+    private fun importToExternalStorage(src: Uri) {
         try {
-            val input = contentResolver.openInputStream(src) ?: return
-            val tempFile = File(cacheDir, "temp_zshare_${System.currentTimeMillis()}.png")
-            FileOutputStream(tempFile).use { out -> input.copyTo(out) }
+            val baseDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
+            val folder = File(baseDir, "Zaticker")
+            if (!folder.exists()) folder.mkdirs()
 
-            val contentUri = FileProvider.getUriForFile(this, "$packageName.provider", tempFile)
-            val intent = Intent(Intent.ACTION_SEND).apply {
-                type = "image/png"
-                putExtra(Intent.EXTRA_STREAM, contentUri)
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                putExtra("is_sticker", true)
-                putExtra("type", 3)
-                setClassName("com.zing.zalo", "com.zing.zalo.ui.TempShareViaActivity")
-            }
-            startActivity(intent)
+            val input = contentResolver.openInputStream(src) ?: return
+            val name = "zaticker_${System.currentTimeMillis()}.png"
+            val file = File(folder, name)
+            FileOutputStream(file).use { out -> input.copyTo(out) }
+
+            val uri = Uri.fromFile(file)
+
+            adapter.addStickerAtTop(this, uri)
+            binding.recycler.scrollToPosition(0)
         } catch (e: Exception) {
-            Toast.makeText(this, getString(R.string.share_failed), Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.legacy_import_failed, e.message), Toast.LENGTH_SHORT).show()
         }
     }
 
-    /** Sticker click → share to Zalo */
+    /** Share sticker to Zalo */
     override fun onStickerClick(uri: Uri) {
         try {
             val file = File(uri.path!!)
             val contentUri = FileProvider.getUriForFile(this, "$packageName.provider", file)
+
             val intent = Intent(Intent.ACTION_SEND).apply {
                 type = "image/png"
                 putExtra(Intent.EXTRA_STREAM, contentUri)
@@ -110,17 +141,18 @@ class MainActivity : AppCompatActivity(), StickerAdapter.StickerListener {
                 putExtra("type", 3)
                 setClassName("com.zing.zalo", "com.zing.zalo.ui.TempShareViaActivity")
             }
+
             startActivity(intent)
         } catch (e: Exception) {
-            Toast.makeText(this, getString(R.string.zalo_not_installed), Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.zalo_share_failed), Toast.LENGTH_SHORT).show()
         }
     }
 
-    /** Long press → delete sticker */
+    /** Delete sticker with confirmation */
     override fun onStickerLongClick(uri: Uri) {
         AlertDialog.Builder(this)
-            .setTitle(getString(R.string.delete_sticker))
-            .setMessage(getString(R.string.delete_sticker_confirm))
+            .setTitle(getString(R.string.delete_title))
+            .setMessage(getString(R.string.delete_message))
             .setPositiveButton(getString(R.string.delete)) { _, _ ->
                 try {
                     val file = File(uri.path ?: "")
@@ -135,42 +167,20 @@ class MainActivity : AppCompatActivity(), StickerAdapter.StickerListener {
             .show()
     }
 
-    /** Handle incoming share intents */
+    /** Import stickers via external share intents */
     private fun handleShareIntent(intent: Intent?) {
         if (intent == null) return
 
         when (intent.action) {
-
-            // Single image → show 3 share targets
             Intent.ACTION_SEND -> {
-                val uri = intent.getParcelableExtra<Uri>(Intent.EXTRA_STREAM) ?: return
-                val options = arrayOf(
-                    getString(R.string.share_import),
-                    getString(R.string.share_quick_zalo),
-                    getString(R.string.share_import_and_zalo)
-                )
-
-                AlertDialog.Builder(this)
-                    .setTitle(getString(R.string.choose_action))
-                    .setItems(options) { _, which ->
-                        when (which) {
-                            0 -> importToAppData(uri)
-                            1 -> shareDirectToZalo(uri)
-                            2 -> {
-                                importToAppData(uri)
-                                shareDirectToZalo(uri)
-                            }
-                        }
-                    }.show()
+                val uri = intent.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)
+                if (uri != null) importToAppOrExternal(uri)
             }
-
-            // Multiple images → import only
             Intent.ACTION_SEND_MULTIPLE -> {
                 val uris = intent.getParcelableArrayListExtra<Uri>(Intent.EXTRA_STREAM)
-                if (!uris.isNullOrEmpty()) {
-                    uris.forEach { importToAppData(it) }
-                }
+                uris?.forEach { importToAppOrExternal(it) }
             }
         }
     }
 }
+
