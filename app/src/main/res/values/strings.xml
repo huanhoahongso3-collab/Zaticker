@@ -1,16 +1,13 @@
 <resources>
-    <!-- App info -->
     <string name="app_name">Zaticker</string>
 
-    <!-- Main actions -->
     <string name="choose_action">Choose action</string>
     <string name="import_sticker">Import Sticker</string>
     <string name="share_zalo">Share to Zalo</string>
-    <string name="import_share_zalo">Import & Share to Zalo</string>
+    <string name="import_share_zalo">Import &amp; Share to Zalo</string>
     <string name="delete_sticker">Delete Sticker</string>
     <string name="cancel">Cancel</string>
 
-    <!-- Toasts & messages -->
     <string name="sticker_imported">Sticker imported successfully</string>
     <string name="sticker_deleted">Sticker deleted</string>
     <string name="sticker_shared">Sticker shared to Zalo</string>
@@ -18,11 +15,9 @@
     <string name="error_sharing">Error sharing sticker</string>
     <string name="error_generic">Something went wrong</string>
 
-    <!-- Permissions -->
     <string name="permission_storage_needed">Storage permission is required to import stickers</string>
     <string name="permission_denied">Permission denied</string>
 
-    <!-- UI labels -->
     <string name="loading">Loading...</string>
     <string name="no_stickers">No stickers available</string>
     <string name="retry">Retry</string>
