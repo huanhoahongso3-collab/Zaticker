@@ -5,7 +5,6 @@ import android.app.AlertDialog
 import android.content.ClipData
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.Color
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -14,7 +13,6 @@ import android.provider.MediaStore
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.Toolbar
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
@@ -27,15 +25,11 @@ class MainActivity : AppCompatActivity(), StickerAdapter.StickerListener {
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var adapter: StickerAdapter
-    private lateinit var toolbar: Toolbar
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
-        // Setup dynamic top bar
-        setupToolbar()
 
         // Load stickers from storage
         adapter = StickerAdapter(StickerAdapter.loadOrdered(this), this)
@@ -51,32 +45,6 @@ class MainActivity : AppCompatActivity(), StickerAdapter.StickerListener {
 
         // Handle external share intents
         handleShareIntent(intent)
-    }
-
-    /** Setup top app bar with dynamic color and fallback */
-    private fun setupToolbar() {
-        toolbar = Toolbar(this)
-        toolbar.title = getString(R.string.app_name)
-        binding.root.addView(toolbar, 0)
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            // Android 12+ dynamic accent
-            val dynamicColor = getColor(android.R.color.system_accent1_500)
-            toolbar.setBackgroundColor(dynamicColor)
-            toolbar.setTitleTextColor(Color.WHITE)
-        } else {
-            // Fallback for A11 and lower
-            val isDarkTheme = (resources.configuration.uiMode and
-                    android.content.res.Configuration.UI_MODE_NIGHT_MASK) ==
-                    android.content.res.Configuration.UI_MODE_NIGHT_YES
-            if (isDarkTheme) {
-                toolbar.setBackgroundColor(Color.BLACK)
-                toolbar.setTitleTextColor(Color.WHITE)
-            } else {
-                toolbar.setBackgroundColor(Color.WHITE)
-                toolbar.setTitleTextColor(Color.BLACK)
-            }
-        }
     }
 
     private fun requestLegacyPermissions() {

@@ -6,17 +6,17 @@
     <string name="import_failed">Import failed: %1$s</string>
     <string name="legacy_import_failed">Legacy import failed: %1$s</string>
     <string name="zalo_share_failed">Zalo share failed</string>
+    <string name="export_failed">Export failed: %1$s</string>
+    <string name="sticker_exported">Sticker exported to: %1$s</string>
 
-    <!-- Delete dialog -->
+    <!-- Delete / Options dialog -->
+    <string name="sticker_options_title">Sticker Options</string>
+    <string name="sticker_options_message">What do you want to do with this sticker?</string>
+    <string name="export">Export</string>
     <string name="delete_title">Delete Sticker</string>
     <string name="delete_message">Do you want to delete this sticker?</string>
     <string name="delete">Delete</string>
     <string name="cancel">Cancel</string>
     <string name="deleted">Deleted</string>
     <string name="delete_failed">Delete failed</string>
-
-    <!-- Sticker options (long press) -->
-    <string name="sticker_options_title">What do you want to do with this image?</string>
-    <string name="sticker_options_message">Choose an action</string>
-    <string name="export">Export</string>
 </resources>

@@ -1,12 +1,7 @@
 <resources>
-    <!-- Fallback purple colors -->
     <color name="purple_500">#6200EE</color>
     <color name="purple_700">#3700B3</color>
     <color name="teal_200">#03DAC5</color>
-
-    <!-- Manual toolbar colors for A11 and below -->
-    <color name="toolbar_light_bg">#FFFFFF</color>
-    <color name="toolbar_light_text">#000000</color>
-    <color name="toolbar_dark_bg">#000000</color>
-    <color name="toolbar_dark_text">#FFFFFF</color>
+    <color name="teal_700">#018786</color>
+    <color name="white">#FFFFFF</color>
 </resources>
