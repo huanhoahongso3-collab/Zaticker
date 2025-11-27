@@ -11,7 +11,7 @@ android {
         minSdk 29
         targetSdk 38
         versionCode 2026
-        versionName '38.1'  // ✅ updated version name
+        versionName '3.81'  // ✅ updated version name
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
