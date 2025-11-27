@@ -1,3 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- App -->
     <string name="app_name">Zaticker</string>
+
+    <!-- Main Actions -->
+    <string name="add_image">Add Image</string>
+    <string name="choose_action">Choose Action</string>
+    <string name="import_to_app">Import into Zaticker</string>
+    <string name="quick_share_zalo">Quick Share to Zalo</string>
+    <string name="import_and_share_zalo">Import + Share to Zalo</string>
+
+    <!-- Notifications / Errors -->
+    <string name="no_images_selected">No images selected</string>
+    <string name="import_failed">Import failed: %1$s</string>
+    <string name="share_failed">Unable to share to Zalo</string>
+    <string name="zalo_not_installed">Zalo not installed or share failed</string>
+    <string name="delete_failed">Delete failed</string>
+
+    <!-- Delete Dialog -->
+    <string name="delete_sticker">Delete Sticker</string>
+    <string name="delete_sticker_confirm">Do you want to delete this sticker?</string>
+    <string name="delete">Delete</string>
+    <string name="cancel">Cancel</string>
+    <string name="deleted">Deleted</string>
+
+    <!-- File prefix -->
+    <string name="file_prefix">zaticker_</string>
+
+    <!-- Progress / temporary states -->
+    <string name="importing">Importing...</string>
+    <string name="sharing">Sharing...</string>
 </resources>
