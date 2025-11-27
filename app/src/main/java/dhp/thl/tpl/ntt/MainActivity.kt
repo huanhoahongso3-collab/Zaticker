@@ -31,19 +31,44 @@ class MainActivity : AppCompatActivity(), StickerAdapter.StickerListener {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Load stickers from storage
+        // --- Toolbar setup ---
+        val toolbar = binding.topAppBar
+        setSupportActionBar(toolbar)
+        supportActionBar?.title = getString(R.string.app_name)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            // Android 12+ dynamic (Monet) color
+            val dynamicColor = getColor(android.R.color.system_accent1_500)
+            toolbar.setBackgroundColor(dynamicColor)
+            toolbar.setTitleTextColor(ContextCompat.getColor(this, android.R.color.white))
+        } else {
+            // Fallback for Android 11 and below
+            val isDark = (resources.configuration.uiMode and
+                    android.content.res.Configuration.UI_MODE_NIGHT_MASK) ==
+                    android.content.res.Configuration.UI_MODE_NIGHT_YES
+
+            if (isDark) {
+                toolbar.setBackgroundColor(ContextCompat.getColor(this, R.color.toolbar_dark_bg))
+                toolbar.setTitleTextColor(ContextCompat.getColor(this, R.color.toolbar_dark_text))
+            } else {
+                toolbar.setBackgroundColor(ContextCompat.getColor(this, R.color.toolbar_light_bg))
+                toolbar.setTitleTextColor(ContextCompat.getColor(this, R.color.toolbar_light_text))
+            }
+        }
+
+        // --- Sticker adapter ---
         adapter = StickerAdapter(StickerAdapter.loadOrdered(this), this)
         binding.recycler.layoutManager = GridLayoutManager(this, 3)
         binding.recycler.adapter = adapter
 
-        // Request legacy storage permission for Android 9 and below
+        // --- Legacy storage permission for Android 9 and below ---
         if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
             requestLegacyPermissions()
         }
 
         binding.addButton.setOnClickListener { openSystemImagePicker() }
 
-        // Handle external share intents
+        // --- Handle external share intents ---
         handleShareIntent(intent)
     }
 
@@ -54,7 +79,7 @@ class MainActivity : AppCompatActivity(), StickerAdapter.StickerListener {
         }
     }
 
-    /** Allow picking multiple images */
+    /** Pick multiple images */
     private fun openSystemImagePicker() {
         val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI).apply {
             type = "image/*"
@@ -81,7 +106,7 @@ class MainActivity : AppCompatActivity(), StickerAdapter.StickerListener {
             }
         }
 
-    /** Save based on API level */
+    /** Import based on API level */
     private fun importToAppOrExternal(src: Uri) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             importToAppData(src)
@@ -90,7 +115,7 @@ class MainActivity : AppCompatActivity(), StickerAdapter.StickerListener {
         }
     }
 
-    /** Scoped storage for Android 10+ */
+    /** Scoped storage Android 10+ */
     private fun importToAppData(src: Uri) {
         try {
             val input = contentResolver.openInputStream(src) ?: return
@@ -148,7 +173,7 @@ class MainActivity : AppCompatActivity(), StickerAdapter.StickerListener {
         }
     }
 
-    /** Long press: 3-option dialog (Export / Delete / Cancel) */
+    /** Long press: Sticker options dialog */
     override fun onStickerLongClick(uri: Uri) {
         AlertDialog.Builder(this)
             .setTitle(getString(R.string.sticker_options_title))
@@ -171,7 +196,7 @@ class MainActivity : AppCompatActivity(), StickerAdapter.StickerListener {
         }
     }
 
-    /** Export sticker to Pictures/Zaticker folder */
+    /** Export sticker to Pictures/Zaticker */
     private fun exportSticker(uri: Uri) {
         try {
             val input = contentResolver.openInputStream(uri) ?: return
@@ -189,7 +214,7 @@ class MainActivity : AppCompatActivity(), StickerAdapter.StickerListener {
         }
     }
 
-    /** Import stickers via external share intents */
+    /** Handle external share intents */
     private fun handleShareIntent(intent: Intent?) {
         if (intent == null) return
 
