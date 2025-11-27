@@ -1,16 +1,13 @@
 <resources>
-    <!-- App info -->
     <string name="app_name">Za Hình Dán</string>
 
-    <!-- Main actions -->
     <string name="choose_action">Chọn hành động</string>
     <string name="import_sticker">Nhập sticker</string>
     <string name="share_zalo">Chia sẻ Zalo</string>
-    <string name="import_share_zalo">Nhập & Chia sẻ Zalo</string>
+    <string name="import_share_zalo">Nhập &amp; Chia sẻ Zalo</string>
     <string name="delete_sticker">Xóa sticker</string>
     <string name="cancel">Hủy</string>
 
-    <!-- Toasts & messages -->
     <string name="sticker_imported">Đã nhập sticker thành công</string>
     <string name="sticker_deleted">Đã xóa sticker</string>
     <string name="sticker_shared">Đã chia sẻ sticker lên Zalo</string>
@@ -18,11 +15,9 @@
     <string name="error_sharing">Lỗi khi chia sẻ sticker</string>
     <string name="error_generic">Có lỗi xảy ra</string>
 
-    <!-- Permissions -->
     <string name="permission_storage_needed">Cần quyền lưu trữ để nhập sticker</string>
     <string name="permission_denied">Quyền bị từ chối</string>
 
-    <!-- UI labels -->
     <string name="loading">Đang tải...</string>
     <string name="no_stickers">Không có sticker</string>
     <string name="retry">Thử lại</string>
