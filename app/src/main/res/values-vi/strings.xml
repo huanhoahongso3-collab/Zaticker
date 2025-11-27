@@ -1,34 +1,29 @@
-<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- App -->
-    <string name="app_name">Zaticker</string>
+    <!-- App info -->
+    <string name="app_name">Za Hình Dán</string>
 
-    <!-- Share Targets -->
-    <string name="share_import">Nhập vào Zaticker</string>
-    <string name="share_quick_zalo">Chia sẻ nhanh lên Zalo</string>
-    <string name="share_import_and_zalo">Nhập vào Zaticker + Chia sẻ Zalo</string>
-
-    <!-- Main Actions -->
-    <string name="add_image">Thêm ảnh</string>
-
-    <!-- Notifications / Errors -->
-    <string name="no_images_selected">Không có ảnh nào được chọn</string>
-    <string name="import_failed">Lỗi nhập ảnh: %1$s</string>
-    <string name="share_failed">Không thể chia sẻ Zalo</string>
-    <string name="zalo_not_installed">Zalo chưa cài hoặc lỗi chia sẻ</string>
-    <string name="delete_failed">Lỗi xóa sticker</string>
-
-    <!-- Delete Dialog -->
-    <string name="delete_sticker">Xóa Sticker</string>
-    <string name="delete_sticker_confirm">Bạn có muốn xóa sticker này không?</string>
-    <string name="delete">Xóa</string>
+    <!-- Main actions -->
+    <string name="choose_action">Chọn hành động</string>
+    <string name="import_sticker">Nhập sticker</string>
+    <string name="share_zalo">Chia sẻ Zalo</string>
+    <string name="import_share_zalo">Nhập & Chia sẻ Zalo</string>
+    <string name="delete_sticker">Xóa sticker</string>
     <string name="cancel">Hủy</string>
-    <string name="deleted">Đã xóa</string>
 
-    <!-- File prefix -->
-    <string name="file_prefix">zaticker_</string>
+    <!-- Toasts & messages -->
+    <string name="sticker_imported">Đã nhập sticker thành công</string>
+    <string name="sticker_deleted">Đã xóa sticker</string>
+    <string name="sticker_shared">Đã chia sẻ sticker lên Zalo</string>
+    <string name="error_importing">Lỗi khi nhập sticker</string>
+    <string name="error_sharing">Lỗi khi chia sẻ sticker</string>
+    <string name="error_generic">Có lỗi xảy ra</string>
 
-    <!-- Progress / temporary states -->
-    <string name="importing">Đang nhập...</string>
-    <string name="sharing">Đang chia sẻ...</string>
+    <!-- Permissions -->
+    <string name="permission_storage_needed">Cần quyền lưu trữ để nhập sticker</string>
+    <string name="permission_denied">Quyền bị từ chối</string>
+
+    <!-- UI labels -->
+    <string name="loading">Đang tải...</string>
+    <string name="no_stickers">Không có sticker</string>
+    <string name="retry">Thử lại</string>
 </resources>
