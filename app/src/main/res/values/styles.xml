@@ -2,9 +2,14 @@
 
     <!-- Base application theme -->
     <style name="Theme.Zaticker" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
+        <!-- Dynamic color for A12+ will override this via code if needed -->
         <item name="colorPrimary">@color/purple_500</item>
         <item name="colorPrimaryVariant">@color/purple_700</item>
+        <item name="colorOnPrimary">@android:color/white</item> <!-- toolbar text default -->
         <item name="colorSecondary">@color/teal_200</item>
+
+        <!-- Toolbar text color fallback for A11 and lower -->
+        <item name="android:textColorPrimary">@color/toolbar_light_text</item>
     </style>
 
 </resources>
