@@ -17,30 +17,69 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Zaticker"
         android:usesCleartextTraffic="true"
-        tools:targetApi="34">
+        tools:targetApi="38">
 
-        <!-- ✅ Main launcher activity -->
+        <!-- Main launcher activity -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
+            android:label="@string/app_name"
             android:configChanges="orientation|screenSize|keyboardHidden">
-
-            <!-- Launcher -->
             <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-
-            <!-- ✅ Allow import from share intent (single or multiple images) -->
-            <intent-filter>
-                <action android:name="android.intent.action.SEND" />
-                <action android:name="android.intent.action.SEND_MULTIPLE" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:mimeType="image/*" />
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
 
-        <!-- ✅ FileProvider for sticker sharing -->
+        <!-- Share target 1: Import into Zaticker -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:label="@string/share_import"
+            android:configChanges="orientation|screenSize|keyboardHidden">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:mimeType="image/*"/>
+            </intent-filter>
+            <meta-data
+                android:name="EXTRA_SHARE_TYPE"
+                android:value="IMPORT"/>
+        </activity>
+
+        <!-- Share target 2: Quick Share to Zalo -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:label="@string/share_quick_zalo"
+            android:configChanges="orientation|screenSize|keyboardHidden">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:mimeType="image/*"/>
+            </intent-filter>
+            <meta-data
+                android:name="EXTRA_SHARE_TYPE"
+                android:value="QUICK_ZALO"/>
+        </activity>
+
+        <!-- Share target 3: Import + Share to Zalo -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:label="@string/share_import_and_zalo"
+            android:configChanges="orientation|screenSize|keyboardHidden">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:mimeType="image/*"/>
+            </intent-filter>
+            <meta-data
+                android:name="EXTRA_SHARE_TYPE"
+                android:value="IMPORT_AND_ZALO"/>
+        </activity>
+
+        <!-- FileProvider for sharing stickers -->
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.provider"
@@ -48,7 +87,7 @@
             android:grantUriPermissions="true">
             <meta-data
                 android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/file_paths" />
+                android:resource="@xml/file_paths"/>
         </provider>
 
     </application>
