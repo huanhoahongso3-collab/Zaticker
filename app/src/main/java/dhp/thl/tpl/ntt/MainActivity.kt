@@ -14,6 +14,7 @@ import android.provider.MediaStore
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
@@ -26,40 +27,56 @@ class MainActivity : AppCompatActivity(), StickerAdapter.StickerListener {
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var adapter: StickerAdapter
+    private lateinit var toolbar: Toolbar
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // --- Setup Toolbar ---
-        setSupportActionBar(binding.toolbar)
-        supportActionBar?.title = getString(R.string.app_name)
+        // Setup dynamic top bar
+        setupToolbar()
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            binding.toolbar.setBackgroundColor(getColor(android.R.color.system_accent1_500))
-            binding.toolbar.setTitleTextColor(Color.WHITE)
-        } else {
-            val isDark = (resources.configuration.uiMode and 0x30) == 0x20
-            binding.toolbar.setBackgroundColor(if (isDark) Color.BLACK else Color.WHITE)
-            binding.toolbar.setTitleTextColor(if (isDark) Color.WHITE else Color.BLACK)
-        }
-
-        // --- Load stickers ---
+        // Load stickers from storage
         adapter = StickerAdapter(StickerAdapter.loadOrdered(this), this)
         binding.recycler.layoutManager = GridLayoutManager(this, 3)
         binding.recycler.adapter = adapter
 
-        // --- Request legacy storage permission for Android 9 and below ---
+        // Request legacy storage permission for Android 9 and below
         if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
             requestLegacyPermissions()
         }
 
-        // --- Add button ---
         binding.addButton.setOnClickListener { openSystemImagePicker() }
 
-        // --- Handle share intent ---
+        // Handle external share intents
         handleShareIntent(intent)
+    }
+
+    /** Setup top app bar with dynamic color and fallback */
+    private fun setupToolbar() {
+        toolbar = Toolbar(this)
+        toolbar.title = getString(R.string.app_name)
+        binding.root.addView(toolbar, 0)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            // Android 12+ dynamic accent
+            val dynamicColor = getColor(android.R.color.system_accent1_500)
+            toolbar.setBackgroundColor(dynamicColor)
+            toolbar.setTitleTextColor(Color.WHITE)
+        } else {
+            // Fallback for A11 and lower
+            val isDarkTheme = (resources.configuration.uiMode and
+                    android.content.res.Configuration.UI_MODE_NIGHT_MASK) ==
+                    android.content.res.Configuration.UI_MODE_NIGHT_YES
+            if (isDarkTheme) {
+                toolbar.setBackgroundColor(Color.BLACK)
+                toolbar.setTitleTextColor(Color.WHITE)
+            } else {
+                toolbar.setBackgroundColor(Color.WHITE)
+                toolbar.setTitleTextColor(Color.BLACK)
+            }
+        }
     }
 
     private fun requestLegacyPermissions() {
@@ -69,7 +86,7 @@ class MainActivity : AppCompatActivity(), StickerAdapter.StickerListener {
         }
     }
 
-    /** Pick multiple images */
+    /** Allow picking multiple images */
     private fun openSystemImagePicker() {
         val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI).apply {
             type = "image/*"
