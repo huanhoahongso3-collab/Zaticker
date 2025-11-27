@@ -3,12 +3,13 @@
     <!-- App -->
     <string name="app_name">Zaticker</string>
 
+    <!-- Share Targets -->
+    <string name="share_import">Import into Zaticker</string>
+    <string name="share_quick_zalo">Quick Share to Zalo</string>
+    <string name="share_import_and_zalo">Import + Share to Zalo</string>
+
     <!-- Main Actions -->
     <string name="add_image">Add Image</string>
-    <string name="choose_action">Choose Action</string>
-    <string name="import_to_app">Import into Zaticker</string>
-    <string name="quick_share_zalo">Quick Share to Zalo</string>
-    <string name="import_and_share_zalo">Import + Share to Zalo</string>
 
     <!-- Notifications / Errors -->
     <string name="no_images_selected">No images selected</string>
