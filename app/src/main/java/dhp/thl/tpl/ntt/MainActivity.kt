@@ -6,7 +6,6 @@ import android.content.ClipData
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
-import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -33,42 +32,33 @@ class MainActivity : AppCompatActivity(), StickerAdapter.StickerListener {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // --- Setup default ActionBar colors dynamically ---
-        supportActionBar?.let { actionBar ->
-            actionBar.title = getString(R.string.app_name)
+        // --- Setup Toolbar ---
+        setSupportActionBar(binding.toolbar)
+        supportActionBar?.title = getString(R.string.app_name)
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                // Android 12+: dynamic wallpaper-based color
-                val dynamicColor = getColor(android.R.color.system_accent1_500)
-                actionBar.setBackgroundDrawable(ColorDrawable(dynamicColor))
-                actionBar.setTitleTextColor(Color.WHITE)
-            } else {
-                // Fallback for older Android
-                if ((resources.configuration.uiMode and 0x30) == 0x20) {
-                    // Dark theme
-                    actionBar.setBackgroundDrawable(ColorDrawable(Color.BLACK))
-                    actionBar.setTitleTextColor(Color.WHITE)
-                } else {
-                    // Light theme
-                    actionBar.setBackgroundDrawable(ColorDrawable(Color.WHITE))
-                    actionBar.setTitleTextColor(Color.BLACK)
-                }
-            }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            binding.toolbar.setBackgroundColor(getColor(android.R.color.system_accent1_500))
+            binding.toolbar.setTitleTextColor(Color.WHITE)
+        } else {
+            val isDark = (resources.configuration.uiMode and 0x30) == 0x20
+            binding.toolbar.setBackgroundColor(if (isDark) Color.BLACK else Color.WHITE)
+            binding.toolbar.setTitleTextColor(if (isDark) Color.WHITE else Color.BLACK)
         }
 
-        // --- Load stickers from storage ---
+        // --- Load stickers ---
         adapter = StickerAdapter(StickerAdapter.loadOrdered(this), this)
         binding.recycler.layoutManager = GridLayoutManager(this, 3)
         binding.recycler.adapter = adapter
 
-        // Request legacy storage permission for Android 9 and below
+        // --- Request legacy storage permission for Android 9 and below ---
         if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
             requestLegacyPermissions()
         }
 
+        // --- Add button ---
         binding.addButton.setOnClickListener { openSystemImagePicker() }
 
-        // Handle external share intents
+        // --- Handle share intent ---
         handleShareIntent(intent)
     }
 
@@ -79,7 +69,7 @@ class MainActivity : AppCompatActivity(), StickerAdapter.StickerListener {
         }
     }
 
-    /** Allow picking multiple images */
+    /** Pick multiple images */
     private fun openSystemImagePicker() {
         val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI).apply {
             type = "image/*"
