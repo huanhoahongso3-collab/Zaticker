@@ -1,0 +1,1 @@
+Zaticker is an open-source Android app that lets users send stickers to Zalo - a Vietnamese messaging app using Share Intent on Android. It stores sticker data on your local device, ensure that your stickers won't be shared to anyone else. It is very easy to use: just hit once to send and hold for a few seconds to delete!
