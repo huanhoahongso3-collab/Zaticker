@@ -38,6 +38,7 @@ android {
 }
 
 dependencies {
+    // AndroidX core
     implementation 'androidx.activity:activity:1.7.2'
     implementation 'androidx.activity:activity-ktx:1.7.2'
     implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.6.2'
@@ -47,14 +48,14 @@ dependencies {
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation 'androidx.fragment:fragment-ktx:1.6.2'
 
-    // ✅ Navigation (last version supporting compileSdk 33)
+    // Navigation
     implementation 'androidx.navigation:navigation-fragment-ktx:2.6.0'
     implementation 'androidx.navigation:navigation-ui-ktx:2.6.0'
 
-    // ✅ Glide for image loading
+    // Glide for image loading
     implementation 'com.github.bumptech.glide:glide:4.16.0'
     kapt 'com.github.bumptech.glide:compiler:4.16.0'
-    implementation("com.squareup.okhttp3:okhttp:4.11.0")
-    implementation("com.squareup.okio:3.7.0")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
+
+    // OkHttp for networking (includes Okio transitively)
+    implementation 'com.squareup.okhttp3:okhttp:4.11.0'
 }
