@@ -1,15 +1,16 @@
 <resources>
+    <!-- App name -->
     <string name="app_name">Za Hình Dán</string>
 
     <!-- Main UI -->
-    <string name="no_images_selected">Chưa chọn hình ảnh nào</string>
-    <string name="import_failed">Nhập thất bại: %1$s</string>
-    <string name="legacy_import_failed">Nhập cũ thất bại: %1$s</string>
+    <string name="no_images_selected">Chưa có hình nào được chọn</string>
+    <string name="import_failed">Nhập hình thất bại: %1$s</string>
+    <string name="legacy_import_failed">Nhập hình cũ thất bại: %1$s</string>
     <string name="zalo_share_failed">Chia sẻ Zalo thất bại</string>
-    <string name="export_failed">Xuất thất bại: %1$s</string>
-    <string name="sticker_exported">Sticker đã xuất tới: %1$s</string>
+    <string name="export_failed">Xuất hình thất bại: %1$s</string>
+    <string name="sticker_exported">Sticker đã được xuất: %1$s</string>
 
-    <!-- Long press / Options dialog -->
+    <!-- Delete / Options dialog -->
     <string name="sticker_options_title">Tùy chọn Sticker</string>
     <string name="sticker_options_message">Bạn muốn làm gì với sticker này?</string>
     <string name="export">Xuất</string>
@@ -19,20 +20,12 @@
     <string name="cancel">Hủy</string>
     <string name="deleted">Đã xóa</string>
     <string name="delete_failed">Xóa thất bại</string>
-    <!-- Existing strings (keep your current ones) -->
 
-    <!-- New: Remove background prompt -->
-    <string name="rb_prompt_title">Xóa nền?</string>
-    <string name="rb_prompt_message">Bạn có muốn xóa nền của ảnh này không?</string>
-    <string name="rb_yes">Có</string>
-    <string name="rb_no">Không</string>
-
-    <!-- New: Long press extra option -->
+    <!-- Long-press option -->
     <string name="rb_option">Xóa nền</string>
 
-    <!-- New: RB results -->
+    <!-- Background removal results -->
     <string name="rb_success">Xóa nền thành công</string>
     <string name="rb_failed">Xóa nền thất bại: %1$s</string>
-
-    <!-- Original dialog title & message -->
 </resources>
+

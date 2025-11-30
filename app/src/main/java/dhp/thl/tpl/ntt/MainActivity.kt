@@ -1,187 +1,179 @@
 package dhp.thl.tpl.ntt
 
-import android.Manifest
-import android.app.AlertDialog
-import android.content.ClipData
 import android.content.Intent
-import android.content.pm.PackageManager
+import android.graphics.BitmapFactory
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
-import android.os.Environment
-import android.provider.MediaStore
+import android.util.Base64
+import android.view.View
+import android.widget.ProgressBar
 import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
-import dhp.thl.tpl.ntt.databinding.ActivityMainBinding
+import androidx.recyclerview.widget.RecyclerView
+import com.squareup.okhttp.MediaType
+import com.squareup.okhttp.MultipartBuilder
+import com.squareup.okhttp.OkHttpClient
+import com.squareup.okhttp.Request
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
-import java.io.FileOutputStream
-import java.net.HttpURLConnection
-import java.net.URL
+import java.io.IOException
 
-class MainActivity : AppCompatActivity(), StickerAdapter.StickerListener {
+class MainActivity : AppCompatActivity() {
 
-    private lateinit var binding: ActivityMainBinding
-    private lateinit var adapter: StickerAdapter
+    private val client = OkHttpClient()
+    private val apiUrl = "https://briaai-bria-rmbg-1-4.hf.space/--replicas/5jrnx/predict"
+
+    private lateinit var recyclerView: RecyclerView
+    private lateinit var adapter: ImageAdapter
+    private val images = mutableListOf<ImageModel>()
+    private lateinit var progressBar: ProgressBar
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+        setContentView(R.layout.activity_main)
 
-        adapter = StickerAdapter(StickerAdapter.loadOrdered(this), this)
-        binding.recycler.layoutManager = GridLayoutManager(this, 3)
-        binding.recycler.adapter = adapter
+        recyclerView = findViewById(R.id.recyclerView)
+        progressBar = findViewById(R.id.progressBar)
+        adapter = ImageAdapter(images, ::onImageLongPress)
+        recyclerView.layoutManager = GridLayoutManager(this, 3)
+        recyclerView.adapter = adapter
 
-        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) requestLegacyPermissions()
-
-        binding.addButton.setOnClickListener { openSystemImagePicker() }
-
-        handleShareIntent(intent)
-    }
-
-    private fun requestLegacyPermissions() {
-        val perm = Manifest.permission.WRITE_EXTERNAL_STORAGE
-        if (ContextCompat.checkSelfPermission(this, perm) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, arrayOf(perm), 999)
+        findViewById<View>(R.id.btnImport).setOnClickListener {
+            pickImages()
         }
     }
 
-    private fun openSystemImagePicker() {
-        val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI).apply {
+    /** Pick images silently (single or multiple) */
+    private fun pickImages() {
+        val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
             type = "image/*"
             putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
         }
-        pickImages.launch(intent)
+        startActivityForResult(Intent.createChooser(intent, "Chọn hình"), 100)
     }
 
-    private val pickImages =
-        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            if (result.resultCode == RESULT_OK) {
-                val clipData: ClipData? = result.data?.clipData
-                val uri: Uri? = result.data?.data
-
-                when {
-                    clipData != null -> {
-                        for (i in 0 until clipData.itemCount) {
-                            importToAppOrExternal(clipData.getItemAt(i).uri, askRB = false)
-                        }
-                    }
-                    uri != null -> promptRemoveBackground(uri)
-                    else -> Toast.makeText(this, getString(R.string.no_images_selected), Toast.LENGTH_SHORT).show()
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == 100 && resultCode == RESULT_OK && data != null) {
+            if (data.clipData != null) {
+                for (i in 0 until data.clipData!!.itemCount) {
+                    val uri = data.clipData!!.getItemAt(i).uri
+                    addImage(uri)
                 }
+            } else {
+                data.data?.let { uri -> addImage(uri) }
             }
         }
-
-    private fun promptRemoveBackground(uri: Uri) {
-        AlertDialog.Builder(this)
-            .setTitle(getString(R.string.rb_prompt_title))
-            .setMessage(getString(R.string.rb_prompt_message))
-            .setPositiveButton(getString(R.string.rb_yes)) { _, _ -> removeBGAndImport(uri) }
-            .setNegativeButton(getString(R.string.rb_no)) { _, _ -> importToAppOrExternal(uri, askRB = false) }
-            .show()
     }
 
-    private fun importToAppOrExternal(src: Uri, askRB: Boolean = true) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) importToAppData(src)
-        else importToExternalStorage(src)
+    private fun addImage(uri: Uri) {
+        val path = FileUtils.getPath(this, uri) ?: return
+        images.add(ImageModel(path))
+        adapter.notifyItemInserted(images.size - 1)
     }
 
-    private fun importToAppData(src: Uri) {
-        try {
-            val input = contentResolver.openInputStream(src) ?: return
-            val name = "zaticker_${System.currentTimeMillis()}.png"
-            val file = File(filesDir, name)
-            FileOutputStream(file).use { out -> input.copyTo(out) }
-            val uri = Uri.fromFile(file)
+    /** Long-press menu: Xóa nền / Xóa / Xuất / Hủy */
+    private fun onImageLongPress(view: View, image: ImageModel) {
+        val popup = androidx.appcompat.widget.PopupMenu(this, view)
+        popup.menu.add(getString(R.string.rb_option)) // Xóa nền
+        popup.menu.add(getString(R.string.delete))    // Xóa
+        popup.menu.add(getString(R.string.export))    // Xuất
+        popup.menu.add(getString(R.string.cancel))    // Hủy
 
-            adapter.addStickerAtTop(this, uri)
-            binding.recycler.scrollToPosition(0)
-        } catch (e: Exception) {
-            Toast.makeText(this, getString(R.string.import_failed, e.message), Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    private fun importToExternalStorage(src: Uri) {
-        try {
-            val baseDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
-            val folder = File(baseDir, "Zaticker")
-            if (!folder.exists()) folder.mkdirs()
-
-            val input = contentResolver.openInputStream(src) ?: return
-            val name = "zaticker_${System.currentTimeMillis()}.png"
-            val file = File(folder, name)
-            FileOutputStream(file).use { out -> input.copyTo(out) }
-
-            val uri = Uri.fromFile(file)
-
-            adapter.addStickerAtTop(this, uri)
-            binding.recycler.scrollToPosition(0)
-        } catch (e: Exception) {
-            Toast.makeText(this, getString(R.string.legacy_import_failed, e.message), Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    private fun removeBGAndImport(src: Uri) {
-        Thread {
-            try {
-                val input = contentResolver.openInputStream(src) ?: return@Thread
-                val url = URL("https://briarmbg20.vercel.app/api/rmbg")
-                val conn = url.openConnection() as HttpURLConnection
-
-                conn.requestMethod = "POST"
-                conn.setRequestProperty("Content-Type", "application/octet-stream")
-                conn.doOutput = true
-
-                conn.outputStream.use { output -> input.copyTo(output) }
-
-                val outputFile = File(filesDir, "zaticker_rb_${System.currentTimeMillis()}.png")
-                conn.inputStream.use { inputNet -> FileOutputStream(outputFile).use { out -> inputNet.copyTo(out) } }
-
-                runOnUiThread {
-                    val uri = Uri.fromFile(outputFile)
-                    adapter.addStickerAtTop(this, uri)
-                    binding.recycler.scrollToPosition(0)
-                    Toast.makeText(this, getString(R.string.rb_success), Toast.LENGTH_SHORT).show()
-                }
-            } catch (e: Exception) {
-                runOnUiThread {
-                    Toast.makeText(this, getString(R.string.rb_failed, e.message), Toast.LENGTH_SHORT).show()
-                }
+        popup.setOnMenuItemClickListener { item ->
+            when (item.title) {
+                getString(R.string.rb_option) -> removeBackgroundWithLoading(image)
+                getString(R.string.delete) -> deleteImage(image)
+                getString(R.string.export) -> exportImage(image)
+                getString(R.string.cancel) -> {}
             }
-        }.start()
+            true
+        }
+        popup.show()
     }
 
-    override fun onStickerClick(uri: Uri) {
-        // unchanged
+    /** Delete image from list and storage */
+    private fun deleteImage(image: ImageModel) {
+        val index = images.indexOf(image)
+        if (index != -1) {
+            images.removeAt(index)
+            adapter.notifyItemRemoved(index)
+        }
+        val file = File(image.path)
+        if (file.exists()) file.delete()
+        Toast.makeText(this, getString(R.string.deleted), Toast.LENGTH_SHORT).show()
     }
 
-    override fun onStickerLongClick(uri: Uri) {
-        AlertDialog.Builder(this)
-            .setTitle(getString(R.string.sticker_options_title))
-            .setMessage(getString(R.string.sticker_options_message))
-            .setPositiveButton(getString(R.string.export)) { _, _ -> exportSticker(uri) }
-            .setNegativeButton(getString(R.string.delete)) { _, _ -> deleteSticker(uri) }
-            .setNeutralButton(getString(R.string.rb_option)) { _, _ -> removeBGAndReimport(uri) }
-            .show()
+    /** Export image using FileProvider */
+    private fun exportImage(image: ImageModel) {
+        val file = File(image.path)
+        if (!file.exists()) return
+
+        val uri = FileProvider.getUriForFile(
+            this,
+            "$packageName.fileprovider",
+            file
+        )
+
+        val shareIntent = Intent().apply {
+            action = Intent.ACTION_SEND
+            type = "image/png"
+            putExtra(Intent.EXTRA_STREAM, uri)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        startActivity(Intent.createChooser(shareIntent, "Xuất hình"))
     }
 
-    private fun removeBGAndReimport(uri: Uri) {
-        removeBGAndImport(uri)
+    /** Remove background with circular loading */
+    private fun removeBackgroundWithLoading(image: ImageModel) {
+        progressBar.visibility = View.VISIBLE
+
+        lifecycleScope.launch {
+            val base64 = callRemoveBgApi(File(image.path))
+            progressBar.visibility = View.GONE
+
+            if (base64 != null) {
+                val decoded = Base64.decode(base64, Base64.DEFAULT)
+                File(image.path).writeBytes(decoded)
+                adapter.notifyItemChanged(images.indexOf(image))
+                Toast.makeText(this@MainActivity, getString(R.string.rb_success), Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(this@MainActivity, getString(R.string.rb_failed, "API lỗi"), Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
-    private fun deleteSticker(uri: Uri) {
-        // unchanged
-    }
+    /** Call Bria AI API */
+    private suspend fun callRemoveBgApi(imageFile: File): String? = withContext(Dispatchers.IO) {
+        try {
+            val requestBody = MultipartBuilder()
+                .type(MultipartBuilder.FORM)
+                .addFormDataPart(
+                    "data[]",
+                    imageFile.name,
+                    com.squareup.okhttp.RequestBody.create(MediaType.parse("image/png"), imageFile)
+                )
+                .build()
 
-    private fun exportSticker(uri: Uri) {
-        // unchanged
-    }
+            val request = Request.Builder()
+                .url(apiUrl)
+                .post(requestBody)
+                .build()
 
-    private fun handleShareIntent(intent: Intent?) {
-        // unchanged
+            client.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) return@withContext null
+                val json = response.body()?.string() ?: return@withContext null
+                return@withContext json.substringAfter("\"data\":[\"").substringBefore("\"]")
+            }
+        } catch (e: IOException) {
+            e.printStackTrace()
+            return@withContext null
+        }
     }
 }
+
