@@ -9,6 +9,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <!-- Main content -->
     <LinearLayout
         android:orientation="vertical"
         android:layout_width="match_parent"
@@ -34,12 +35,12 @@
 
     </LinearLayout>
 
-    <!-- Blocking overlay with centered progress bar -->
+    <!-- Blocking overlay with progress bar -->
     <FrameLayout
         android:id="@+id/progressOverlay"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#BF000000"  <!-- 74% transparent black -->
+        android:background="#BF000000"
         android:visibility="gone"
         android:clickable="true"
         android:focusable="true">
