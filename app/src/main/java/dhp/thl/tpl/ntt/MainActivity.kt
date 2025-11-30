@@ -6,6 +6,7 @@ import android.content.ClipData
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.AsyncTask
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
@@ -17,38 +18,37 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
-import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import dhp.thl.tpl.ntt.databinding.ActivityMainBinding
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.RequestBody.Companion.asRequestBody
 import java.io.File
 import java.io.FileOutputStream
-import java.io.IOException
+import java.io.OutputStream
+import java.net.HttpURLConnection
+import java.net.URL
 
 class MainActivity : AppCompatActivity(), StickerAdapter.StickerListener {
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var adapter: StickerAdapter
-    private val client = OkHttpClient()
-    private val apiUrl = "https://briarmbg20.vercel.app/api/rmbg"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // Load stickers
         adapter = StickerAdapter(StickerAdapter.loadOrdered(this), this)
         binding.recycler.layoutManager = GridLayoutManager(this, 3)
         binding.recycler.adapter = adapter
 
-        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) requestLegacyPermissions()
+        // Request legacy storage for Android 9 and below
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
+            requestLegacyPermissions()
+        }
+
         binding.addButton.setOnClickListener { openSystemImagePicker() }
+
+        // Handle external share intents
         handleShareIntent(intent)
     }
 
@@ -67,24 +67,28 @@ class MainActivity : AppCompatActivity(), StickerAdapter.StickerListener {
         pickImages.launch(intent)
     }
 
-    private val pickImages =
-        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            if (result.resultCode == RESULT_OK) {
-                val clipData: ClipData? = result.data?.clipData
-                val uri: Uri? = result.data?.data
-                when {
-                    clipData != null -> (0 until clipData.itemCount).forEach {
-                        importToAppOrExternal(clipData.getItemAt(it).uri)
+    private val pickImages = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == RESULT_OK) {
+            val clipData: ClipData? = result.data?.clipData
+            val uri: Uri? = result.data?.data
+            when {
+                clipData != null -> {
+                    for (i in 0 until clipData.itemCount) {
+                        importToAppOrExternal(clipData.getItemAt(i).uri)
                     }
-                    uri != null -> importToAppOrExternal(uri)
-                    else -> Toast.makeText(this, getString(R.string.no_images_selected), Toast.LENGTH_SHORT).show()
                 }
+                uri != null -> importToAppOrExternal(uri)
+                else -> Toast.makeText(this, getString(R.string.no_images_selected), Toast.LENGTH_SHORT).show()
             }
         }
+    }
 
     private fun importToAppOrExternal(src: Uri) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) importToAppData(src)
-        else importToExternalStorage(src)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            importToAppData(src)
+        } else {
+            importToExternalStorage(src)
+        }
     }
 
     private fun importToAppData(src: Uri) {
@@ -93,7 +97,8 @@ class MainActivity : AppCompatActivity(), StickerAdapter.StickerListener {
             val name = "zaticker_${System.currentTimeMillis()}.png"
             val file = File(filesDir, name)
             FileOutputStream(file).use { out -> input.copyTo(out) }
-            adapter.addStickerAtTop(this, Uri.fromFile(file))
+            val uri = Uri.fromFile(file)
+            adapter.addStickerAtTop(this, uri)
             binding.recycler.scrollToPosition(0)
         } catch (e: Exception) {
             Toast.makeText(this, getString(R.string.import_failed, e.message), Toast.LENGTH_SHORT).show()
@@ -103,12 +108,14 @@ class MainActivity : AppCompatActivity(), StickerAdapter.StickerListener {
     private fun importToExternalStorage(src: Uri) {
         try {
             val baseDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
-            val folder = File(baseDir, "Zaticker").apply { if (!exists()) mkdirs() }
+            val folder = File(baseDir, "Zaticker")
+            if (!folder.exists()) folder.mkdirs()
             val input = contentResolver.openInputStream(src) ?: return
             val name = "zaticker_${System.currentTimeMillis()}.png"
             val file = File(folder, name)
             FileOutputStream(file).use { out -> input.copyTo(out) }
-            adapter.addStickerAtTop(this, Uri.fromFile(file))
+            val uri = Uri.fromFile(file)
+            adapter.addStickerAtTop(this, uri)
             binding.recycler.scrollToPosition(0)
         } catch (e: Exception) {
             Toast.makeText(this, getString(R.string.legacy_import_failed, e.message), Toast.LENGTH_SHORT).show()
@@ -119,8 +126,7 @@ class MainActivity : AppCompatActivity(), StickerAdapter.StickerListener {
         try {
             val file = File(uri.path!!)
             val contentUri = FileProvider.getUriForFile(this, "$packageName.provider", file)
-            val intent = Intent().apply {
-                action = Intent.ACTION_SEND
+            val intent = Intent(Intent.ACTION_SEND).apply {
                 type = "image/png"
                 putExtra(Intent.EXTRA_STREAM, contentUri)
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
@@ -138,8 +144,9 @@ class MainActivity : AppCompatActivity(), StickerAdapter.StickerListener {
         AlertDialog.Builder(this)
             .setTitle(getString(R.string.sticker_options_title))
             .setMessage(getString(R.string.sticker_options_message))
-            .setPositiveButton(getString(R.string.rb_option)) { _, _ -> removeBackground(uri) }
+            .setPositiveButton(getString(R.string.export)) { _, _ -> exportSticker(uri) }
             .setNegativeButton(getString(R.string.delete)) { _, _ -> deleteSticker(uri) }
+            .setNeutralButton(getString(R.string.rb_option)) { _, _ -> removeBackground(uri) } // RB option
             .setNeutralButton(getString(R.string.cancel), null)
             .show()
     }
@@ -159,7 +166,8 @@ class MainActivity : AppCompatActivity(), StickerAdapter.StickerListener {
         try {
             val input = contentResolver.openInputStream(uri) ?: return
             val baseDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
-            val folder = File(baseDir, "Zaticker").apply { if (!exists()) mkdirs() }
+            val folder = File(baseDir, "Zaticker")
+            if (!folder.exists()) folder.mkdirs()
             val name = "zaticker_export_${System.currentTimeMillis()}.png"
             val file = File(folder, name)
             FileOutputStream(file).use { out -> input.copyTo(out) }
@@ -172,52 +180,66 @@ class MainActivity : AppCompatActivity(), StickerAdapter.StickerListener {
     private fun handleShareIntent(intent: Intent?) {
         if (intent == null) return
         when (intent.action) {
-            Intent.ACTION_SEND -> intent.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)?.let { importToAppOrExternal(it) }
-            Intent.ACTION_SEND_MULTIPLE -> intent.getParcelableArrayListExtra<Uri>(Intent.EXTRA_STREAM)?.forEach { importToAppOrExternal(it) }
+            Intent.ACTION_SEND -> {
+                val uri = intent.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)
+                if (uri != null) importToAppOrExternal(uri)
+            }
+            Intent.ACTION_SEND_MULTIPLE -> {
+                val uris = intent.getParcelableArrayListExtra<Uri>(Intent.EXTRA_STREAM)
+                uris?.forEach { importToAppOrExternal(it) }
+            }
         }
     }
 
-    /** --------------------- Background Removal --------------------- */
-
+    // ================= RB Function ==================
     private fun removeBackground(uri: Uri) {
-        try {
-            val file = File(uri.path ?: return)
-            binding.progressBar.visibility = View.VISIBLE
-
-            lifecycleScope.launch {
-                val success = callRemoveBgNewApi(file)
-                binding.progressBar.visibility = View.GONE
-
-                if (success) {
-                    adapter.notifyDataSetChanged()
-                    Toast.makeText(this@MainActivity, getString(R.string.rb_success), Toast.LENGTH_SHORT).show()
-                } else {
-                    Toast.makeText(this@MainActivity, getString(R.string.rb_failed, "API lỗi"), Toast.LENGTH_SHORT).show()
-                }
-            }
-        } catch (e: Exception) {
-            binding.progressBar.visibility = View.GONE
-            Toast.makeText(this, getString(R.string.rb_failed, e.message), Toast.LENGTH_SHORT).show()
-        }
+        binding.progressBar.visibility = View.VISIBLE
+        BackgroundRemovalTask(uri).execute()
     }
 
-    private suspend fun callRemoveBgNewApi(imageFile: File): Boolean = withContext(Dispatchers.IO) {
-        try {
-            val requestBody = imageFile.asRequestBody("application/octet-stream".toMediaType())
-            val request = Request.Builder()
-                .url(apiUrl)
-                .post(requestBody)
-                .build()
+    private inner class BackgroundRemovalTask(private val uri: Uri) : AsyncTask<Void, Void, Uri?>() {
 
-            client.newCall(request).execute().use { response ->
-                if (!response.isSuccessful) return@withContext false
-                val bytes = response.body?.bytes() ?: return@withContext false
-                imageFile.writeBytes(bytes)
-                return@withContext true
+        private var errorMessage: String? = null
+
+        override fun doInBackground(vararg params: Void?): Uri? {
+            return try {
+                val inputStream = contentResolver.openInputStream(uri) ?: return null
+                val url = URL("https://briarmbg20.vercel.app/api/rmbg")
+                val connection = url.openConnection() as HttpURLConnection
+                connection.requestMethod = "POST"
+                connection.doOutput = true
+                connection.setRequestProperty("Content-Type", "application/octet-stream")
+
+                connection.outputStream.use { out: OutputStream ->
+                    inputStream.copyTo(out)
+                }
+
+                if (connection.responseCode == 200) {
+                    val name = "zaticker_rb_${System.currentTimeMillis()}.png"
+                    val file = File(filesDir, name)
+                    connection.inputStream.use { input ->
+                        FileOutputStream(file).use { out -> input.copyTo(out) }
+                    }
+                    Uri.fromFile(file)
+                } else {
+                    errorMessage = "HTTP ${connection.responseCode}"
+                    null
+                }
+            } catch (e: Exception) {
+                errorMessage = e.message
+                null
             }
-        } catch (e: IOException) {
-            e.printStackTrace()
-            return@withContext false
+        }
+
+        override fun onPostExecute(result: Uri?) {
+            binding.progressBar.visibility = View.GONE
+            if (result != null) {
+                adapter.addStickerAtTop(this@MainActivity, result)
+                binding.recycler.scrollToPosition(0)
+                Toast.makeText(this@MainActivity, getString(R.string.rb_success), Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(this@MainActivity, getString(R.string.rb_failed, errorMessage), Toast.LENGTH_LONG).show()
+            }
         }
     }
 }
