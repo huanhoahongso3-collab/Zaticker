@@ -1,0 +1,1 @@
+Bỏ những quyền không cần thiết khỏi AndroidManifest.xml
