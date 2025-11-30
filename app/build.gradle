@@ -11,7 +11,7 @@ android {
         minSdk 21
         targetSdk 38
         versionCode 3000
-        versionName '3.0'  // ✅ updated version name
+        versionName '3'  // ✅ updated version name
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
