@@ -1,10 +1,10 @@
-name: Android CI (Android 6+)
+name: Android CI
 
 on:
   push:
-    branches: [ master ]
+    branches: [ removebg ]
   pull_request:
-    branches: [ master ]
+    branches: [ removebg ]
 
 jobs:
   build:
