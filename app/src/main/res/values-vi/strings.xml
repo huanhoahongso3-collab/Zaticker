@@ -35,6 +35,4 @@
     <string name="rb_failed">Xóa nền thất bại: %1$s</string>
 
     <!-- Original dialog title & message -->
-    <string name="sticker_options_title">Tùy chọn sticker</string>
-    <string name="sticker_options_message">Chọn thao tác cho sticker</string>
 </resources>

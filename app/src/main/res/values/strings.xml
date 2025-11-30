@@ -35,6 +35,4 @@
     <string name="rb_failed">Background removal failed: %1$s</string>
 
     <!-- Original dialog title & message (from your app) -->
-    <string name="sticker_options_title">Sticker Options</string>
-    <string name="sticker_options_message">Choose an action for this sticker</string>
 </resources>
