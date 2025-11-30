@@ -31,9 +31,10 @@
             android:layout_marginTop="8dp"
             android:clipToPadding="false"
             app:layoutManager="androidx.recyclerview.widget.GridLayoutManager" />
+
     </LinearLayout>
 
-    <!-- Blocking overlay with progress bar -->
+    <!-- Blocking overlay with centered progress bar -->
     <FrameLayout
         android:id="@+id/progressOverlay"
         android:layout_width="match_parent"
@@ -49,6 +50,7 @@
             android:layout_width="64dp"
             android:layout_height="64dp"
             android:layout_gravity="center" />
+
     </FrameLayout>
 
 </FrameLayout>
