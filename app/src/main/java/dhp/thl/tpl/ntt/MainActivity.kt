@@ -19,6 +19,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.recyclerview.widget.GridLayoutManager
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import dhp.thl.tpl.ntt.databinding.ActivityMainBinding
 import java.io.File
 import java.io.FileOutputStream
@@ -141,13 +142,23 @@ class MainActivity : AppCompatActivity(), StickerAdapter.StickerListener {
     }
 
     override fun onStickerLongClick(uri: Uri) {
-        AlertDialog.Builder(this)
+        val options = arrayOf(
+            getString(R.string.export),
+            getString(R.string.delete),
+            getString(R.string.rb_option),
+            getString(R.string.cancel)
+        )
+
+        MaterialAlertDialogBuilder(this)
             .setTitle(getString(R.string.sticker_options_title))
-            .setMessage(getString(R.string.sticker_options_message))
-            .setPositiveButton(getString(R.string.export)) { _, _ -> exportSticker(uri) }
-            .setNegativeButton(getString(R.string.delete)) { _, _ -> deleteSticker(uri) }
-            .setNeutralButton(getString(R.string.rb_option)) { _, _ -> removeBackground(uri) } // RB option
-            .setNeutralButton(getString(R.string.cancel), null)
+            .setItems(options) { _, which ->
+                when (which) {
+                    0 -> exportSticker(uri)
+                    1 -> deleteSticker(uri)
+                    2 -> removeBackground(uri)
+                    3 -> {} // Cancel
+                }
+            }
             .show()
     }
 
