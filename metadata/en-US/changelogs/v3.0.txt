@@ -1,0 +1,1 @@
+Add remove background function.
