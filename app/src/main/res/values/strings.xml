@@ -19,4 +19,22 @@
     <string name="cancel">Cancel</string>
     <string name="deleted">Deleted</string>
     <string name="delete_failed">Delete failed</string>
+    <!-- Existing strings (keep your current ones) -->
+
+    <!-- New: Remove background prompt -->
+    <string name="rb_prompt_title">Remove Background?</string>
+    <string name="rb_prompt_message">Do you want to remove the background of this image?</string>
+    <string name="rb_yes">Yes</string>
+    <string name="rb_no">No</string>
+
+    <!-- New: Long press extra option -->
+    <string name="rb_option">Remove Background</string>
+
+    <!-- New: RB results -->
+    <string name="rb_success">Background removed successfully</string>
+    <string name="rb_failed">Background removal failed: %1$s</string>
+
+    <!-- Original dialog title & message (from your app) -->
+    <string name="sticker_options_title">Sticker Options</string>
+    <string name="sticker_options_message">Choose an action for this sticker</string>
 </resources>

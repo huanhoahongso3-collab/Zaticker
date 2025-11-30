@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="dhp.thl.tpl.ntt">
 
-    <!-- Android 10+ ignores these permissions, but old versions need them -->
+    <!-- 🔹 Android 10+ ignores these permissions, but old versions need them -->
     <uses-permission
         android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="28" />
@@ -11,6 +11,10 @@
     <uses-permission
         android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="28" />
+
+    <!-- Optional Internet, not needed for storage -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
         android:allowBackup="true"
@@ -21,7 +25,7 @@
         android:theme="@style/Theme.Zaticker"
         tools:targetApi="34">
 
-        <!-- Main Activity -->
+        <!-- 🔥 Main Activity -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -42,7 +46,7 @@
             </intent-filter>
         </activity>
 
-        <!-- FileProvider for sharing stickers -->
+        <!-- 🔥 FileProvider for sharing stickers -->
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.provider"
@@ -55,3 +59,4 @@
 
     </application>
 </manifest>
+
