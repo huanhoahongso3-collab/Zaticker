@@ -10,7 +10,7 @@ android {
         applicationId 'dhp.thl.tpl.ntt'
         minSdk 21
         targetSdk 40
-        versionCode 3140
+        versionCode 3840
         versionName '3.1'  // ✅ updated version name
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
