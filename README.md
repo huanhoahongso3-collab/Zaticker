@@ -1,8 +1,9 @@
-# 📦 Zaticker — Sticker Experiments for Zalo
+# 📦 Zaticker — Share custom sticker to Zalo
 
 Zaticker is a vibe-driven coding project focused on how Zalo handles sticker share by Intent in Android.
 
 It is inspired by how Zamoji - a VNG app can send sticker to Zalo
+
 Released under **GPLv2** to keep it open.
 
 ---
@@ -13,6 +14,9 @@ Released under **GPLv2** to keep it open.
 - Log successes and failures during sticker sending
 
 ---
+## How I found it:
+- I started using ADB and logcat to observe how Zamoji sends stickers to Zalo
+- Then, I also deep in Zamoji source code using reverse engineering to see how the intent is sent to Zalo to send stickers
 
 ## Status Overview
 
@@ -20,34 +24,11 @@ Released under **GPLv2** to keep it open.
 
 Working features include:
 
-- Share intents (`ACTION_SEND` / `ACTION_SEND_MULTIPLE`)
-- Sticker press and preview interactions
-
-
----
-
-## Technical Overview
-
-### Android Share Layer
-
-Zaticker integrates with the Android share pipeline to pass sticker assets to Zalo.
-
-Mechanisms involved:
-
-- `Intent.ACTION_SEND`
-- `Intent.ACTION_SEND_MULTIPLE`
-- MIME types used:
-  - `image/webp`
-  - `image/png`
-- Temporary URI sharing via ContentProvider
-
-Asset formats used during testing include:
-
-- JPG
-- PNG
-- WEBP
----
+- Share intents (`ACTION_SEND` / `ACTION_SEND_MULTIPLE`) directly to Zalo
+- Export stickers when needed
+- Import single and multiple images both in the app and share intent
 
 ## License
 Zaticker Copyright (c) 2026
+
 Licensed under the GNU General Public License v2.0 (GPL-2.0)
