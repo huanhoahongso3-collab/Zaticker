@@ -1,9 +1,9 @@
 # 📦 Zaticker — Sticker Experiments for Zalo
 
-Zaticker is a vibe-driven coding project focused on how Zalo handles sticker inputs, custom sticker packs, and sharing flows.  
-It is not a production-grade application — it is a sandbox for experimenting with stickers and documenting observed behaviors.
+Zaticker is a vibe-driven coding project focused on how Zalo handles sticker share by Intent in Android.
 
-Released under **GPLv2** to keep experimentation open.
+It is inspired by how Zamoji - a VNG app can send sticker to Zalo
+Released under **GPLv2** to keep it open.
 
 ---
 
@@ -40,13 +40,12 @@ Mechanisms involved:
   - `image/webp`
   - `image/png`
 - Temporary URI sharing via ContentProvider
-- URI permission grants for external consumption
 
 Asset formats used during testing include:
 
 - JPG
 - PNG
-
+- WEBP
 ---
 
 ## License
