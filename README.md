@@ -20,7 +20,7 @@ Released under **GPLv2** to keep it open.
 
 ## Status Overview
 
-> **STATUS:** Functional. Usable for experimentation. 
+> **STATUS:** Functional. Usable for normal uses, but bugs are still existed
 
 Working features include:
 
