@@ -1,4 +1,4 @@
-name: Android CI (Android 6+)
+name: Android CI (Android 7+)
 
 on:
   push:
