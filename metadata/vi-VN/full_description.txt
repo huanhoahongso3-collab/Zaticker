@@ -1,1 +1,0 @@
-Zaticker là một ứng dụng Android mã nguồn mở cho phép người dùng gửi nhãn dán đến Zalo - một ứng dụng nhắn tin Việt Nam sử dụng tính năng Share Intent trên Android. Ứng dụng lưu trữ dữ liệu nhãn dán trên thiết bị cục bộ của bạn, đảm bảo nhãn dán của bạn sẽ không bị chia sẻ cho bất kỳ ai khác. Ứng dụng rất dễ sử dụng: chỉ cần nhấn một lần để gửi và giữ vài giây để xóa!

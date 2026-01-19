@@ -1,1 +1,0 @@
-Change the main color of the app to fit the contrast of dark mode.
