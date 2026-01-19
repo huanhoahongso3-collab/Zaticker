@@ -1,10 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="dhp.thl.tpl.ntt">
-
-    <!-- Android 10+ ignores these permissions, but old versions need them -->
-    <uses-permission
+    package="dhp.thl.tpl.ndv"> <uses-permission
         android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="28" />
 
@@ -21,19 +18,16 @@
         android:theme="@style/Theme.Zaticker"
         tools:targetApi="34">
 
-        <!-- Main Activity -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
             android:configChanges="orientation|screenSize|keyboardHidden">
 
-            <!-- Launcher -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
-            <!-- Handle share → Zaticker -->
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
                 <action android:name="android.intent.action.SEND_MULTIPLE" />
@@ -42,10 +36,9 @@
             </intent-filter>
         </activity>
 
-        <!-- FileProvider for sharing stickers -->
         <provider
             android:name="androidx.core.content.FileProvider"
-            android:authorities="${applicationId}.provider"
+            android:authorities="dhp.thl.tpl.ndv.provider"
             android:exported="false"
             android:grantUriPermissions="true">
             <meta-data

@@ -1,7 +1,9 @@
 <resources>
-    <color name="purple_500">#FFA500</color>
-    <color name="purple_700">#CC8400</color>
-    <color name="teal_200">#00B894</color>
-    <color name="teal_700">#007D5E</color>
-    <color name="white">#FFFFFF</color>
+    <color name="primary_orange">#FF8C00</color> 
+    <color name="primary_orange_container">#FFDBC0</color>
+    
+    <color name="tertiary_accent">#4D6600</color>
+    <color name="tertiary_container">#CDEDA3</color>
+
+    <color name="white">#FFFFFF</color> 
 </resources>
