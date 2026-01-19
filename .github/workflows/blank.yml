@@ -2,9 +2,9 @@ name: Android CI (Android 6+)
 
 on:
   push:
-    branches: [ master ]
+    branches: [ m3test ]
   pull_request:
-    branches: [ master ]
+    branches: [ m3test ]
 
 jobs:
   build:
